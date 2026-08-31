@@ -21,6 +21,7 @@
 ai-artifacts/
 session-transcripts/
 *.chatlog
+docs/execution/
 
 # JavaScript and TypeScript
 node_modules/

@@ -3,7 +3,7 @@ set -euo pipefail
 
 readonly max_text_bytes=$((1024 * 1024))
 readonly max_file_bytes=$((5 * 1024 * 1024))
-readonly forbidden_path_pattern='(^|/)(\.codex|\.claude|\.cursor|ai-artifacts|session-transcripts)(/|$)|(^|/)CLAUDE\.md$|(^|/)\.aider|\.chatlog$|(^|/)(node_modules|coverage|node-db|db-sync|kupo-db|proof-params|proof-cache)(/|$)|(^|/)\.env($|\.)'
+readonly forbidden_path_pattern='(^|/)(\.codex|\.claude|\.cursor|ai-artifacts|session-transcripts|docs/execution)(/|$)|(^|/)CLAUDE\.md$|(^|/)\.aider|\.chatlog$|(^|/)(node_modules|coverage|node-db|db-sync|kupo-db|proof-params|proof-cache)(/|$)|(^|/)\.env($|\.)'
 status_before=$(git status --porcelain=v1)
 
 mapfile -d '' tracked_files < <(git ls-files -z)
