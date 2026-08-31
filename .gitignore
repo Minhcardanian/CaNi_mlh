@@ -37,6 +37,7 @@ logs/
 tmp/
 temp/
 .cache/
+config/relay-policy.json
 
 # Chain and proving state
 node-db/

@@ -1,0 +1,127 @@
+pragma language_version 0.23;
+
+import CompactStandardLibrary;
+
+export ledger policyId: Bytes<32>;
+export ledger escrowId: Bytes<32>;
+export ledger milestoneId: Bytes<32>;
+export ledger beneficiaryPkh: Bytes<28>;
+export ledger actionId: Bytes<32>;
+export ledger assetPolicyId: Bytes<28>;
+export ledger assetName: Bytes<32>;
+export ledger amount: Uint<64>;
+export ledger cardanoValidatorHash: Bytes<28>;
+export ledger reviewerOnePublicKey: Bytes<32>;
+export ledger reviewerTwoPublicKey: Bytes<32>;
+export ledger reviewerNullifiers: Set<Bytes<32>>;
+export ledger approvalCount: Counter;
+export ledger authorized: Boolean;
+export ledger authorizationNullifier: Bytes<32>;
+
+constructor(
+  initialPolicyId: Bytes<32>,
+  initialEscrowId: Bytes<32>,
+  initialMilestoneId: Bytes<32>,
+  initialBeneficiaryPkh: Bytes<28>,
+  initialActionId: Bytes<32>,
+  initialAssetPolicyId: Bytes<28>,
+  initialAssetName: Bytes<32>,
+  initialAmount: Uint<64>,
+  initialCardanoValidatorHash: Bytes<28>,
+  initialReviewerOnePublicKey: Bytes<32>,
+  initialReviewerTwoPublicKey: Bytes<32>
+) {
+  assert(initialReviewerOnePublicKey != initialReviewerTwoPublicKey, "Reviewers must be distinct");
+  policyId = disclose(initialPolicyId);
+  escrowId = disclose(initialEscrowId);
+  milestoneId = disclose(initialMilestoneId);
+  beneficiaryPkh = disclose(initialBeneficiaryPkh);
+  actionId = disclose(initialActionId);
+  assetPolicyId = disclose(initialAssetPolicyId);
+  assetName = disclose(initialAssetName);
+  amount = disclose(initialAmount);
+  cardanoValidatorHash = disclose(initialCardanoValidatorHash);
+  reviewerOnePublicKey = disclose(initialReviewerOnePublicKey);
+  reviewerTwoPublicKey = disclose(initialReviewerTwoPublicKey);
+  authorized = false;
+}
+
+witness localReviewerSecret(): Bytes<32>;
+
+export circuit approve(): [] {
+  assert(!authorized, "Milestone is already authorized");
+  const secret = localReviewerSecret();
+  const reviewerPublicKey = reviewerKey(secret);
+  assert(
+    disclose(reviewerPublicKey == reviewerOnePublicKey) ||
+      disclose(reviewerPublicKey == reviewerTwoPublicKey),
+    "Reviewer is not authorized"
+  );
+
+  const nullifier = disclose(
+    reviewerNullifier(secret, milestoneId, kernel.self().bytes)
+  );
+  assert(!reviewerNullifiers.member(nullifier), "Reviewer already approved this milestone");
+  reviewerNullifiers.insert(disclose(nullifier));
+  approvalCount.increment(1);
+
+  if (approvalCount as Field == 2) {
+    authorized = true;
+    authorizationNullifier = disclose(authorizationId(
+      policyId,
+      escrowId,
+      milestoneId,
+      beneficiaryPkh,
+      actionId,
+      assetPolicyId,
+      assetName,
+      amount,
+      kernel.self().bytes,
+      cardanoValidatorHash
+    ));
+  }
+}
+
+export circuit reviewerKey(secret: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "nightpermit:reviewer:v1"), secret]);
+}
+
+export circuit reviewerNullifier(
+  secret: Bytes<32>,
+  milestone: Bytes<32>,
+  deployment: Bytes<32>
+): Bytes<32> {
+  return persistentHash<Vector<4, Bytes<32>>>([
+    pad(32, "nightpermit:approval:v1"),
+    deployment,
+    milestone,
+    secret
+  ]);
+}
+
+export circuit authorizationId(
+  policy: Bytes<32>,
+  escrow: Bytes<32>,
+  milestone: Bytes<32>,
+  beneficiary: Bytes<28>,
+  action: Bytes<32>,
+  assetPolicy: Bytes<28>,
+  asset: Bytes<32>,
+  trancheAmount: Uint<64>,
+  deployment: Bytes<32>,
+  validator: Bytes<28>
+): Bytes<32> {
+  return persistentHash<Vector<11, Bytes<32>>>([
+    pad(32, "nightpermit:authorization:v1"),
+    deployment,
+    policy,
+    escrow,
+    milestone,
+    persistentHash<Bytes<28>>(beneficiary),
+    action,
+    persistentHash<Bytes<28>>(assetPolicy),
+    asset,
+    trancheAmount as Field as Bytes<32>,
+    persistentHash<Bytes<28>>(validator)
+  ]);
+}

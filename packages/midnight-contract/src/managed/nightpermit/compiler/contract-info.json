@@ -1,0 +1,310 @@
+{
+  "compiler-version": "0.31.0",
+  "language-version": "0.23.0",
+  "runtime-version": "0.16.0",
+  "circuits": [
+    {
+      "name": "approve",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "reviewerKey",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "secret",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "reviewerNullifier",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "secret",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "milestone",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "deployment",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "authorizationId",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "policy",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "escrow",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "milestone",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "beneficiary",
+          "type": {
+            "type-name": "Bytes",
+            "length": 28
+          }
+        },
+        {
+          "name": "action",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "assetPolicy",
+          "type": {
+            "type-name": "Bytes",
+            "length": 28
+          }
+        },
+        {
+          "name": "asset",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "trancheAmount",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
+          }
+        },
+        {
+          "name": "deployment",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        },
+        {
+          "name": "validator",
+          "type": {
+            "type-name": "Bytes",
+            "length": 28
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    }
+  ],
+  "witnesses": [
+    {
+      "name": "localReviewerSecret",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    }
+  ],
+  "contracts": [
+  ],
+  "ledger": [
+    {
+      "name": "policyId",
+      "index": 0,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "escrowId",
+      "index": 1,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "milestoneId",
+      "index": 2,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "beneficiaryPkh",
+      "index": 3,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 28
+      }
+    },
+    {
+      "name": "actionId",
+      "index": 4,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "assetPolicyId",
+      "index": 5,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 28
+      }
+    },
+    {
+      "name": "assetName",
+      "index": 6,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "amount",
+      "index": 7,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Uint",
+        "maxval": 18446744073709551615
+      }
+    },
+    {
+      "name": "cardanoValidatorHash",
+      "index": 8,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 28
+      }
+    },
+    {
+      "name": "reviewerOnePublicKey",
+      "index": 9,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "reviewerTwoPublicKey",
+      "index": 10,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "reviewerNullifiers",
+      "index": 11,
+      "exported": true,
+      "storage": "Set",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
+      "name": "approvalCount",
+      "index": 12,
+      "exported": true,
+      "storage": "Counter"
+    },
+    {
+      "name": "authorized",
+      "index": 13,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Boolean"
+      }
+    },
+    {
+      "name": "authorizationNullifier",
+      "index": 14,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    }
+  ]
+}

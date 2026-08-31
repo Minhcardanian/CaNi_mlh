@@ -1,4 +1,6 @@
+use aiken/cbor
 use aiken/interval
+use aiken/primitive/bytearray
 use cardano/address.{Address, Script, VerificationKey}
 use cardano/assets
 use cardano/transaction.{
@@ -195,6 +197,16 @@ fn accepts_scaled_state(consumed_count: Int) -> Bool {
   )
 }
 
+test records_scaled_datum_sizes() {
+  bytearray.length(cbor.serialise(state(repeated_nullifiers(1, [])))) == 390 && bytearray.length(
+    cbor.serialise(state(repeated_nullifiers(8, []))),
+  ) == 628 && bytearray.length(
+    cbor.serialise(state(repeated_nullifiers(16, []))),
+  ) == 900 && bytearray.length(
+    cbor.serialise(state(repeated_nullifiers(32, []))),
+  ) == 1_444
+}
+
 test accepts_exact_state_transition() {
   let current_state = state([])
   let next_state =
@@ -239,6 +251,16 @@ test rejects_multiple_state_thread_tokens() {
     initial_state,
     state_thread_policy_id,
     initialization_transaction(initial_state, 2),
+  )
+}
+
+test rejects_missing_state_thread_token() fail {
+  let initial_state = state([])
+  nightpermit.nightpermit.mint(
+    initialization_ref,
+    initial_state,
+    state_thread_policy_id,
+    initialization_transaction(initial_state, 0),
   )
 }
 

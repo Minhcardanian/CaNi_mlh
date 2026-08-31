@@ -125,6 +125,18 @@ test rejects_expired_validity_range() {
   )
 }
 
+test rejects_not_yet_valid_range() {
+  let not_before_ms = permit_v1.preview_slot_to_posix_ms(121_500_000)
+  !permit_v1.authorizes_claim(
+    gv_01_policy,
+    gv_01_bytes,
+    gv_01_signature,
+    [gv_01_policy.beneficiary_pkh],
+    interval.between(not_before_ms - 1_000, not_before_ms - 1),
+    [],
+  )
+}
+
 test rejects_wrong_entitlement_policy() {
   let not_before_ms = permit_v1.preview_slot_to_posix_ms(121_500_000)
   let expiry_ms = permit_v1.preview_slot_to_posix_ms(121_503_600)

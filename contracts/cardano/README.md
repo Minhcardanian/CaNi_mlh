@@ -26,4 +26,6 @@ aiken build
 
 The project pins Aiken `1.1.13`, Plutus V3, and `aiken-lang/stdlib` `2.2.1`. `aiken build` generates `plutus.json` locally; the blueprint is not committed because it is reproducible from pinned source and tool versions.
 
+The contract suite contains 33 tests, including explicit not-yet-valid and missing-state-thread-token rejection cases. Serialized datum sizes for 1, 8, 16, and 32 consumed nullifiers are 390, 628, 900, and 1,444 bytes respectively.
+
 The validator is testnet-only. It does not make the relay trustless, directly verify a Midnight proof, mint the state-thread token, or provide transaction-building and deployment infrastructure.

@@ -36,7 +36,7 @@ Beneficiary wallet -----> Cardano Aiken validator (Preview)
                               exact milestone payout
 ```
 
-The planned application is split into five bounded components:
+The application is split into five bounded components:
 
 - **Web application:** guides the three-stage review, authorization, and claim flow while keeping Midnight and Cardano network state explicit.
 - **Midnight contract:** enforces the authorized-reviewer set, two-distinct-reviewer threshold, private witness rules, and authorization nullifier behavior.
@@ -68,8 +68,8 @@ npm test
 npm run build
 ```
 
-The shared `@nightpermit/permit` package owns the canonical binary codec and Ed25519 envelope. The Cardano component consumes the same golden vectors and enforces the state-thread payout transition. The binary layout and trust boundary are documented in [docs/protocol/permit-v1.md](docs/protocol/permit-v1.md); Cardano contract behavior is documented in [contracts/cardano/README.md](contracts/cardano/README.md).
+The shared `@nightpermit/permit` package owns the canonical binary codec and Ed25519 envelope. The Cardano component consumes the same golden vectors and enforces the state-thread payout transition. The binary layout and trust boundary are documented in [docs/protocol/permit-v1.md](docs/protocol/permit-v1.md); component behavior is documented alongside the [Midnight contract](packages/midnight-contract/README.md), [relay](packages/relay/README.md), and [Cardano validator](contracts/cardano/README.md).
 
 ## Project state
 
-The infrastructure baseline, versioned permit protocol, and Cardano validator are implemented and locally tested. Midnight contract, relay, transaction-building integration, and web application work remain in progress.
+The infrastructure baseline, versioned permit protocol, Cardano validator, Midnight authorization contract, and attestation relay are implemented and locally tested. Preprod deployment/proving, Cardano transaction-building integration, and the web application remain in progress.

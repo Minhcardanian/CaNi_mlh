@@ -1,0 +1,22 @@
+{
+  "name": "@nightpermit/midnight-contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && cp -R src/managed dist/managed && cp src/nightpermit.compact dist/nightpermit.compact",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "compile": "compact compile src/nightpermit.compact src/managed/nightpermit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "0.16.0"
+  }
+}
