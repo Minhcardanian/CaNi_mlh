@@ -1,0 +1,53 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.skey
+*.mnemonic
+*.seed
+*.keystore
+*.p12
+*.pfx
+*.pem
+
+# AI and assistant artifacts
+.codex/
+**/.codex/
+.claude/
+**/.claude/
+.cursor/
+**/.cursor/
+.aider*
+ai-artifacts/
+session-transcripts/
+*.chatlog
+
+# JavaScript and TypeScript
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+.cache/
+
+# Chain and proving state
+node-db/
+db-sync/
+kupo-db/
+proof-params/
+proof-cache/
+*.socket
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
