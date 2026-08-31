@@ -64,6 +64,8 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
 .approval-count p { display: grid; gap: 5px; margin: 0; }
 .approval-count small { color: #8ca8a1; }
 .pending { color: #f2c14e; font-weight: 700; }
+.public-disclosure { display: grid; gap: 4px; margin: -10px 0 22px; padding: 13px 15px; border-left: 3px solid #f2c14e; background: #102b27; color: #a8c2bc; font-size: 12px; line-height: 1.5; }
+.public-disclosure strong { color: #f2c14e; }
 .evidence { display: flex; flex-direction: column; padding: 30px 27px; border-left: 1px solid #2b4b45; background: #091c19; }
 .evidence dl { margin: 20px 0; }
 .evidence dl div { display: flex; justify-content: space-between; gap: 15px; padding: 9px 0; border-bottom: 1px solid #203b36; }
@@ -98,6 +100,20 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
   .workspace { grid-template-columns: 170px 1fr; }
   .evidence { grid-column: 1 / -1; border-top: 1px solid #2b4b45; border-left: 0; }
   .evidence dl { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+}
+@media (min-width: 961px) and (max-height: 760px) {
+  main { padding-bottom: 14px; }
+  .topbar { height: 58px; }
+  .hero { padding: 24px 0 20px; }
+  h1 { font-size: clamp(38px, 3.75vw, 48px); }
+  .workspace { min-height: 390px; }
+  .stages { padding-block: 20px; }
+  .task { padding-block: 24px; }
+  .lead { margin-block: 10px 20px; }
+  .evidence { padding: 20px 24px; }
+  .evidence dl { margin: 12px 0; }
+  .evidence dl div { padding-block: 5px; }
+  .trust-note { padding-top: 10px; }
 }
 @media (max-width: 680px) {
   .networks { display: none; }

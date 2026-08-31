@@ -103,7 +103,7 @@ The beneficiary flow is at `/`. The operator-only deployment ceremony is at `/de
 
 One optional fallback Kupo/Ogmios pair can be configured for the browser. It must be a complete Preview-compatible pair and remote URLs must use HTTPS. Failover is limited to provider initialization; NightPermit never retries a wallet signature or transaction submission automatically.
 
-While an operation is active, the product displays its purpose, elapsed time, timeout boundary, and retry behavior. Wallet prompts and chain submissions remain single-shot; a failure cannot create a false completion state.
+While an operation is active, both the beneficiary flow and deployment ceremony display its purpose, elapsed time, timeout boundary, and retry behavior. Wallet prompts and chain submissions remain single-shot; a failure cannot create a false completion state. Connected wallet identity and network stay visible before later transaction requests, and the claim stage explicitly identifies the Cardano data that becomes public.
 
 ## Demo flow
 

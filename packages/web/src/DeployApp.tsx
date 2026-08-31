@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { toFlowError } from "./errors.js";
+import { OperationStatus, type OperationDescriptor } from "./OperationStatus.js";
 import { parsePublicPolicy, policyTemplate } from "./deployment-input.js";
 import type {
   DeploymentArtifacts,
@@ -9,6 +10,30 @@ import type {
 import type { PublicWallet } from "./state.js";
 
 type Stage = "connect" | "prepare" | "midnight" | "cardano" | "complete";
+type DeploymentOperation = "connect-midnight" | "connect-cardano" | "prepare" | "deploy-midnight" | "initialize-cardano";
+
+const operationStatus: Record<DeploymentOperation, OperationDescriptor> = {
+  "connect-midnight": {
+    title: "Waiting for Midnight deployment wallet",
+    boundary: "Wallet-controlled prompt; the ceremony does not retry it automatically.",
+  },
+  "connect-cardano": {
+    title: "Loading Cardano deployment outputs",
+    boundary: "One wallet prompt followed by bounded provider reads; no transaction is submitted.",
+  },
+  prepare: {
+    title: "Validating the public cross-chain policy",
+    boundary: "Local validation only; a failure creates no chain state.",
+  },
+  "deploy-midnight": {
+    title: "Deploying the Midnight approval contract",
+    boundary: "One wallet request; public artifacts remain unavailable until confirmation.",
+  },
+  "initialize-cardano": {
+    title: "Initializing the Cardano escrow state",
+    boundary: "One wallet signature and one submission; confirmation is tracked separately.",
+  },
+};
 
 function short(value: string): string {
   return value.length > 22 ? `${value.slice(0, 12)}…${value.slice(-8)}` : value;
@@ -21,7 +46,8 @@ function PublicJson({ label, value }: { label: string; value: unknown }) {
 export function DeployApp({ loadRuntime }: { loadRuntime(): Promise<DeploymentRuntime> }) {
   const runtimeRef = useRef<DeploymentRuntime | undefined>(undefined);
   const [stage, setStage] = useState<Stage>("connect");
-  const [busy, setBusy] = useState(false);
+  const [operation, setOperation] = useState<DeploymentOperation>();
+  const [operationStartedAt, setOperationStartedAt] = useState(0);
   const [error, setError] = useState<ReturnType<typeof toFlowError>>();
   const [midnightWallet, setMidnightWallet] = useState<PublicWallet>();
   const [cardanoWallet, setCardanoWallet] = useState<PublicWallet>();
@@ -37,15 +63,17 @@ export function DeployApp({ loadRuntime }: { loadRuntime(): Promise<DeploymentRu
   const [artifacts, setArtifacts] = useState<DeploymentArtifacts>();
 
   const runtime = async () => runtimeRef.current ??= await loadRuntime();
-  const run = async (action: () => Promise<void>) => {
-    setBusy(true);
+  const busy = operation !== undefined;
+  const run = async (nextOperation: DeploymentOperation, action: () => Promise<void>) => {
+    setOperation(nextOperation);
+    setOperationStartedAt(Date.now());
     setError(undefined);
     try {
       await action();
     } catch (cause) {
       setError(toFlowError(cause));
     } finally {
-      setBusy(false);
+      setOperation(undefined);
     }
   };
   const selected = candidates.find(({ txHash, outputIndex }) => `${txHash}#${outputIndex}` === selectedRef);
@@ -59,7 +87,8 @@ export function DeployApp({ loadRuntime }: { loadRuntime(): Promise<DeploymentRu
       <div><p className="eyebrow">Public configuration · wallet custody</p><h1>Bind both chains.<br />Publish one policy.</h1></div>
       <p className="ceremony-note">This page prepares public identifiers and asks wallet extensions to sign. It never writes seed phrases, signing keys, or reviewer credentials to an artifact.</p>
     </section>
-    {error && <div className="error" role="alert"><div><strong>{error.code}</strong><p>{error.message}</p></div><button onClick={() => setError(undefined)}>Dismiss</button></div>}
+    {error && <div className="error" role="alert"><div><strong>{error.code}</strong><p>{error.message}</p><small>{error.retryable ? "No completion was recorded. You can safely retry this step." : "Review the wallet or public deployment configuration before trying again."}</small></div><button onClick={() => setError(undefined)}>Dismiss</button></div>}
+    {operation && <OperationStatus descriptor={operationStatus[operation]} startedAt={operationStartedAt} />}
     <section className="ceremony">
       <nav className="ceremony-steps" aria-label="Deployment steps">
         {(["connect", "prepare", "midnight", "cardano", "complete"] as const).map((name, index) =>
@@ -69,8 +98,8 @@ export function DeployApp({ loadRuntime }: { loadRuntime(): Promise<DeploymentRu
       {stage === "connect" && <article className="ceremony-panel">
         <p className="step-label">Step 1</p><h2>Connect deployment wallets</h2>
         <p className="lead">Use Midnight Preprod and Cardano Preview wallets controlled by the deployment operator.</p>
-        <div className="wallet-row"><div><span>Midnight</span><strong>{midnightWallet?.name ?? "Not connected"}</strong><small>Preprod required</small></div><button disabled={busy || Boolean(midnightWallet)} onClick={() => void run(async () => setMidnightWallet(await (await runtime()).connectMidnight()))}>{midnightWallet ? "Connected" : "Connect Midnight"}</button></div>
-        <div className="wallet-row"><div><span>Cardano</span><strong>{cardanoWallet?.name ?? "Not connected"}</strong><small>Preview required</small></div><button disabled={busy || Boolean(cardanoWallet)} onClick={() => void run(async () => {
+        <div className="wallet-row"><div><span>Midnight</span><strong>{midnightWallet?.name ?? "Not connected"}</strong><small>Preprod required</small></div><button disabled={busy || Boolean(midnightWallet)} onClick={() => void run("connect-midnight", async () => setMidnightWallet(await (await runtime()).connectMidnight()))}>{midnightWallet ? "Connected" : "Connect Midnight"}</button></div>
+        <div className="wallet-row"><div><span>Cardano</span><strong>{cardanoWallet?.name ?? "Not connected"}</strong><small>Preview required</small></div><button disabled={busy || Boolean(cardanoWallet)} onClick={() => void run("connect-cardano", async () => {
           const active = await runtime();
           setCardanoWallet(await active.connectCardano());
           const available = await active.initializationCandidates();
@@ -88,7 +117,7 @@ export function DeployApp({ loadRuntime }: { loadRuntime(): Promise<DeploymentRu
           const value = `${candidate.txHash}#${candidate.outputIndex}`;
           return <option key={value} value={value}>{short(candidate.txHash)}#{candidate.outputIndex} · {candidate.lovelace} lovelace · {candidate.assetCount} assets</option>;
         })}</select></label>
-        <button className="primary" disabled={busy || !selected} onClick={() => void run(async () => {
+        <button className="primary" disabled={busy || !selected} onClick={() => void run("prepare", async () => {
           if (!selected) return;
           setPrepared(await (await runtime()).prepare(parsePublicPolicy(policy), selected));
           setStage("midnight");
@@ -103,7 +132,7 @@ export function DeployApp({ loadRuntime }: { loadRuntime(): Promise<DeploymentRu
           <label>Deploying reviewer secret<input type="password" autoComplete="off" value={reviewerSecretHex} onChange={(event) => setReviewerSecretHex(event.target.value)} /></label>
           <p>These credentials remain in memory only for this operation and are cleared after the wallet request.</p>
         </div>
-        <button className="primary" disabled={busy || !privateStoragePassword || !reviewerSecretHex} onClick={() => void run(async () => {
+        <button className="primary" disabled={busy || !privateStoragePassword || !reviewerSecretHex} onClick={() => void run("deploy-midnight", async () => {
           try {
             const result = await (await runtime()).deployMidnight({ privateStoragePassword, reviewerSecretHex });
             setMidnightTransaction(result.transactionId);
@@ -120,7 +149,7 @@ export function DeployApp({ loadRuntime }: { loadRuntime(): Promise<DeploymentRu
         <p className="lead">Midnight deployment confirmed. The Preview transaction locks the configured tranche with the zero-sequence state token.</p>
         <dl className="review-record"><div><dt>Midnight transaction</dt><dd>{midnightTransaction}</dd></div></dl>
         <label className="field">State output lovelace<input inputMode="numeric" value={initialLovelace} onChange={(event) => setInitialLovelace(event.target.value)} /></label>
-        <button className="primary" disabled={busy || !/^[1-9][0-9]*$/.test(initialLovelace)} onClick={() => void run(async () => {
+        <button className="primary" disabled={busy || !/^[1-9][0-9]*$/.test(initialLovelace)} onClick={() => void run("initialize-cardano", async () => {
           const active = await runtime();
           const result = await active.initializeCardano(BigInt(initialLovelace));
           setCardanoTransaction(result.transactionId);

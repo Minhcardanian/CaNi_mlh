@@ -25,7 +25,7 @@ The Drive tracker is the authoritative status record. This source map identifies
 | OR-004 | `packages/web/test/App.test.tsx`, `packages/web/test/DeployApp.test.tsx` |
 | OR-005 | `packages/relay/test/server.test.ts`, live E2E correlation record in the Drive tracker |
 | OR-008 | Product CI plus the exact-SHA clean-clone evidence in the Drive tracker |
-| UX-001, UX-002, UX-003, UX-004, UX-005, UX-006 | `packages/web/test/App.test.tsx`, `packages/web/src/App.tsx`, live browser review in the Drive tracker |
+| UX-001, UX-002, UX-003, UX-004, UX-005, UX-006 | `packages/web/test/App.test.tsx`, `packages/web/test/DeployApp.test.tsx`, `packages/web/src/App.tsx`, live browser review in the Drive tracker |
 | PF-002 | `packages/web/test/App.test.tsx`, `packages/web/test/state.test.ts`, `packages/relay/test/ogmios.test.ts`, `infra/check-readiness.test.mjs`, live timing evidence in the Drive tracker |
 | PF-004 | Demo checklist and truthful staged/live evidence in the Drive tracker |
 | HC-001 through HC-010 | External registration, repository, submission, and video evidence owned in validation gate G00 |

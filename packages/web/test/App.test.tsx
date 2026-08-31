@@ -48,12 +48,15 @@ describe("NightPermit application", () => {
     await screen.findByText("Lace");
     fireEvent.click(screen.getByRole("button", { name: "Connect Cardano" }));
     await screen.findByRole("heading", { name: "Approve without publishing identity" });
+    expect(screen.getByText("Lace · Preprod")).toBeTruthy();
+    expect(screen.getByText("Eternl · Preview")).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText(/Encrypted storage password/), { target: { value: "Correct-Horse-2026" } });
     fireEvent.change(screen.getByLabelText(/Reviewer secret/), { target: { value: "10".repeat(32) } });
     fireEvent.click(screen.getByRole("button", { name: "Review and approve on Midnight" }));
     await screen.findByRole("heading", { name: "Claim the exact tranche" });
     expect(screen.getByText("2 / 2")).toBeTruthy();
+    expect(screen.getByText(/Beneficiary, asset, amount, permit nullifier/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Get signed permit" }));
     await screen.findByText("Verified");

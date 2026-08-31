@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DeployApp } from "../src/DeployApp.js";
 import type { DeploymentRuntime } from "../src/deployment-runtime.js";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 function publicPolicy(): string {
   return JSON.stringify({
@@ -24,6 +27,21 @@ function publicPolicy(): string {
 }
 
 describe("deployment ceremony", () => {
+  it("shows elapsed time and a single-shot boundary during wallet work", async () => {
+    vi.useFakeTimers();
+    let resolveConnection!: (wallet: { name: string; network: "Midnight Preprod" }) => void;
+    const runtime = {
+      connectMidnight: vi.fn(() => new Promise((resolve) => { resolveConnection = resolve; })),
+    } as unknown as DeploymentRuntime;
+    render(<DeployApp loadRuntime={async () => runtime} />);
+    fireEvent.click(screen.getByRole("button", { name: "Connect Midnight" }));
+    expect(screen.getByRole("status").textContent).toContain("does not retry it automatically");
+    await act(async () => { vi.advanceTimersByTime(1_000); });
+    expect(screen.getByRole("status").textContent).toContain("1.0s elapsed");
+    await act(async () => { resolveConnection({ name: "Lace", network: "Midnight Preprod" }); });
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
   it("orders confirmed chain operations and renders only public artifacts", async () => {
     const calls: string[] = [];
     const deployMidnight = vi.fn(async () => {

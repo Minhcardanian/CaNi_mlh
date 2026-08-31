@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { toFlowError } from "./errors.js";
+import { OperationStatus, type OperationDescriptor } from "./OperationStatus.js";
 import type { AppRuntime } from "./runtime.js";
 import { flowReducer, initialFlowState, type Operation } from "./state.js";
 
-const operationStatus: Record<Operation, { title: string; boundary: string }> = {
+const operationStatus: Record<Operation, OperationDescriptor> = {
   "connect-midnight": {
     title: "Waiting for Midnight wallet",
     boundary: "Wallet-controlled prompt; NightPermit does not retry it automatically.",
@@ -41,24 +42,14 @@ export function App({ runtime }: { runtime: AppRuntime }) {
   const [reviewerSecretHex, setReviewerSecretHex] = useState("");
   const [privateStoragePassword, setPrivateStoragePassword] = useState("");
   const [operationStartedAt, setOperationStartedAt] = useState(0);
-  const [operationElapsedMs, setOperationElapsedMs] = useState(0);
   const busy = state.operation !== undefined;
 
   useEffect(() => {
     if (state.error) errorRef.current?.focus();
   }, [state.error]);
 
-  useEffect(() => {
-    if (!state.operation || operationStartedAt === 0) return;
-    const updateElapsed = () => setOperationElapsedMs(Math.max(0, Date.now() - operationStartedAt));
-    updateElapsed();
-    const timer = window.setInterval(updateElapsed, 250);
-    return () => window.clearInterval(timer);
-  }, [operationStartedAt, state.operation]);
-
   const run = async (operation: Operation, action: () => Promise<void>) => {
     setOperationStartedAt(Date.now());
-    setOperationElapsedMs(0);
     dispatch({ type: "START", operation });
     try {
       await action();
@@ -102,10 +93,7 @@ export function App({ runtime }: { runtime: AppRuntime }) {
       )}
 
       {state.operation && (
-        <div className="operation-status" role="status" aria-live="polite">
-          <div><strong>{operationStatus[state.operation].title}</strong><small>{operationStatus[state.operation].boundary}</small></div>
-          <span>{(operationElapsedMs / 1_000).toFixed(1)}s elapsed</span>
-        </div>
+        <OperationStatus descriptor={operationStatus[state.operation]} startedAt={operationStartedAt} />
       )}
 
       <section className="workspace" aria-live="polite">
@@ -182,6 +170,7 @@ export function App({ runtime }: { runtime: AppRuntime }) {
             <>
               <p className="step-label">Stage 3</p><h2>Claim the exact tranche</h2>
               <p className="lead">The relay attests to confirmed Midnight state. Cardano still enforces beneficiary, amount, validity, and one-time use.</p>
+              <p className="public-disclosure"><strong>Public on Cardano Preview</strong>Beneficiary, asset, amount, permit nullifier, and transaction details become public when the claim is submitted.</p>
               {!state.permit ? (
                 <button className="primary" disabled={busy || !state.midnightTxId} onClick={() => void run("permit", async () => {
                   const result = await runtime.getPermit(state.midnightTxId!);
@@ -210,8 +199,8 @@ export function App({ runtime }: { runtime: AppRuntime }) {
         <aside className="evidence" aria-labelledby="evidence-title">
           <div><p className="step-label">Public evidence</p><h2 id="evidence-title">Protocol record</h2></div>
           <dl>
-            <div><dt>Midnight wallet</dt><dd><Status ok={Boolean(state.midnightWallet)}>{state.midnightWallet ? "Preprod connected" : "Waiting"}</Status></dd></div>
-            <div><dt>Cardano wallet</dt><dd><Status ok={Boolean(state.cardanoWallet)}>{state.cardanoWallet ? "Preview connected" : "Waiting"}</Status></dd></div>
+            <div><dt>Midnight wallet</dt><dd><Status ok={Boolean(state.midnightWallet)}>{state.midnightWallet ? `${state.midnightWallet.name} · Preprod` : "Waiting"}</Status></dd></div>
+            <div><dt>Cardano wallet</dt><dd title={state.cardanoWallet?.address}><Status ok={Boolean(state.cardanoWallet)}>{state.cardanoWallet ? `${state.cardanoWallet.name} · Preview` : "Waiting"}</Status></dd></div>
             <div><dt>Threshold</dt><dd>{state.approvalCount} / 2</dd></div>
             <div><dt>Midnight transaction</dt><dd title={state.midnightTxId}>{short(state.midnightTxId)}</dd></div>
             <div><dt>Permit hash</dt><dd title={state.permit?.permitHash}>{short(state.permit?.permitHash)}</dd></div>
