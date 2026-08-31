@@ -3,7 +3,7 @@
 Updated: 2026-08-31T03:30:00Z
 Terminal target: HACKATHON_PRODUCT_DONE
 Current phase: P0 readiness and provenance
-Current item: P0-09 repository hygiene and CI baseline
+Current item: P0-06 Midnight compatibility freeze
 Status: IN_PROGRESS
 
 ## Grounded state
@@ -27,7 +27,7 @@ Status: IN_PROGRESS
 | P0-06 Midnight compatibility freeze | IN_PROGRESS | Official matrix still lists ledger-v8, proof server 8.0.3, Compact compiler 0.30.0, toolchain 0.5.1, language 0.22.0, and Midnight.js 4.0.4. Local `compact` reports 0.3.0 and requires resolution. | Verify the intended Compact command/toolchain and official example. |
 | P0-07 upstream Midnight E2E | PENDING | Preprod indexer readiness returned HTTP 200. | Restore Docker, run official proof example, then perform wallet-controlled E2E. |
 | P0-08 dual wallets | BLOCKED_USER_ACTION | Browser extensions and accounts are not inspectable from CLI. | Batch browser wallet confirmation. |
-| P0-09 hygiene and CI baseline | IN_PROGRESS | Baseline files and checks are being created. | Validate locally, commit, push, and verify CI. |
-| P0-10 tracker evidence | IN_PROGRESS | Drive workbook is grounded. | Write only verified results and preserve formatting. |
+| P0-09 hygiene and CI baseline | PASS | HYG-001 through HYG-010 pass locally and in GitHub Actions run 33354274816 at commit bda20d5. | Keep the gate mandatory for every later commit. |
+| P0-10 tracker evidence | PENDING | Verified P0 results are synchronized to the Drive workbook. | Update the workbook after the next gate state changes. |
 
 Industrial readiness and optional integrations remain outside the active MVP path.

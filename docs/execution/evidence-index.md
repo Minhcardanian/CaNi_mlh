@@ -15,5 +15,7 @@ Evidence is concise, redacted, and limited to public identifiers and reproducibl
 | EV-P0-009 | G09 compatibility source refresh | 2026-08-31T03:27:00Z | PASS | Official Midnight SDK compatibility matrix | Ledger-v8 and the documented 8.0.3, 0.30.0, 0.5.1, 0.22.0, and 4.0.4 baseline remain listed. |
 | EV-P0-010 | G00 rule refresh | 2026-08-31T03:27:00Z | PARTIAL | Official Devpost and MLH event pages | Cross-Chain rules match the plan. Both pages report that the event ended; submission/account state remains human-controlled. |
 | EV-P0-011 | G05 Aiken smoke | 2026-08-31T03:29:27Z | PASS | Disposable project: `aiken check`; `aiken build`; blueprint file check | Aiken 1.1.13 with stdlib 2.2.1 passed 1 of 1 unit tests and generated a 1,389-byte `plutus.json`. |
+| EV-P0-012 | G16 repository hygiene | 2026-08-31T03:34:00Z | PASS | `GITLEAKS_BIN=/tmp/nightpermit-tools/gitleaks/gitleaks scripts/check-hygiene.sh` | HYG-001 through HYG-010 pass, including full history and current-tree secret scans plus the `.codex` and AI-artifact guard. |
+| EV-P0-013 | G21 CI baseline | 2026-08-31T03:35:00Z | PASS | GitHub Actions run 33354274816 | Hygiene workflow passed for exact commit `bda20d55edb4cdd850fc6a89abd523ac8c1b9998`. |
 
 Transaction, contract, validator, wallet, and public-network evidence is not yet available and is not claimed.
