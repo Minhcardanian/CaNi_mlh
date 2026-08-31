@@ -118,7 +118,12 @@ export class PermitService {
   }
 
   private relayPublicKey(): Promise<Hex> {
-    this.relayPublicKeyPromise ??= getRelayPublicKey(this.config.relaySigningSeed);
+    this.relayPublicKeyPromise ??= getRelayPublicKey(this.config.relaySigningSeed).then((publicKey) => {
+      if (publicKey !== this.config.relayPublicKey) {
+        throw new RelayError("NP_RELAY_CONFIGURATION_INVALID", "relay signing key does not match expected public key", 500);
+      }
+      return publicKey;
+    });
     return this.relayPublicKeyPromise;
   }
 

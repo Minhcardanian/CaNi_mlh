@@ -1,4 +1,5 @@
 import type { Assets, Script, UTxO } from "@lucid-evolution/lucid";
+export type { Assets } from "@lucid-evolution/lucid";
 import type { Hex, PermitV1 } from "@nightpermit/permit";
 
 export type PermitEnvelope = {

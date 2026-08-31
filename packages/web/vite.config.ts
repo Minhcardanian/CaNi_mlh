@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import wasm from "vite-plugin-wasm";
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 export default defineConfig({
   plugins: [react(), wasm()],
@@ -20,6 +21,12 @@ export default defineConfig({
     manifest: true,
     target: "esnext",
     sourcemap: true,
+    rollupOptions: {
+      input: {
+        app: resolve(import.meta.dirname, "index.html"),
+        deploy: resolve(import.meta.dirname, "deploy.html"),
+      },
+    },
   },
   server: {
     host: "127.0.0.1",

@@ -1,7 +1,12 @@
 import type { LucidEvolution, TxSignBuilder } from "@lucid-evolution/lucid";
 import { describe, expect, it, vi } from "vitest";
-import { createWalletClaimPlan, submitWalletClaim } from "../src/index.js";
-import { currentSlot, fixture } from "./fixtures.js";
+import {
+  createWalletClaimPlan,
+  createWalletInitializationPlan,
+  submitWalletClaim,
+  submitWalletInitialization,
+} from "../src/index.js";
+import { currentSlot, fixture, rawValidatorCode } from "./fixtures.js";
 
 describe("live wallet claim adapter", () => {
   it("discovers and decodes the unique state UTxO", async () => {
@@ -56,6 +61,88 @@ describe("live wallet claim adapter", () => {
 
     const result = await submitWalletClaim(lucid, input.envelope, input.validator);
     expect(result.transactionId).toBe("ab".repeat(32));
+    expect(submit).toHaveBeenCalledWith({ canonical: true });
+    expect(awaitTxConfirmation).not.toHaveBeenCalled();
+    await result.awaitConfirmation();
+    expect(awaitTxConfirmation).toHaveBeenCalledWith(result.transactionId);
+  });
+});
+
+describe("live wallet initialization adapter", () => {
+  const initialInventory = (input: Awaited<ReturnType<typeof fixture>>) => ({
+    lovelace: 10_000_000n,
+    [input.state.permitPolicy.assetPolicyId + input.state.permitPolicy.assetName]: 50_000_000n,
+  });
+
+  it("requires the parameterization output reference to belong to the connected wallet", async () => {
+    const input = await fixture();
+    const initializationRef = { txHash: "aa".repeat(32), outputIndex: 1 };
+    const initializationUtxo = {
+      ...initializationRef,
+      address: input.beneficiaryAddress,
+      assets: { lovelace: 100_000_000n },
+    };
+    const lucid = {
+      utxosByOutRef: async () => [initializationUtxo],
+      wallet: () => ({ getUtxos: async () => [initializationUtxo] }),
+    } as unknown as LucidEvolution;
+    const plan = await createWalletInitializationPlan(lucid, {
+      compiledCode: rawValidatorCode,
+      initializationRef,
+      initialState: input.state,
+      inventory: initialInventory(input),
+    });
+    expect(plan.initializationUtxo).toEqual(initializationUtxo);
+
+    const unrelated = {
+      ...lucid,
+      wallet: () => ({ getUtxos: async () => [] }),
+    } as unknown as LucidEvolution;
+    await expect(createWalletInitializationPlan(unrelated, {
+      compiledCode: rawValidatorCode,
+      initializationRef,
+      initialState: input.state,
+      inventory: initialInventory(input),
+    })).rejects.toMatchObject({ code: "NP_CARDANO_BAD_UTXO" });
+  });
+
+  it("signs and submits initialization once while exposing confirmation separately", async () => {
+    const input = await fixture();
+    const initializationRef = { txHash: "aa".repeat(32), outputIndex: 1 };
+    const initializationUtxo = {
+      ...initializationRef,
+      address: input.beneficiaryAddress,
+      assets: { lovelace: 100_000_000n },
+    };
+    const submit = vi.fn(async () => "cd".repeat(32));
+    const completeSigned = vi.fn(async () => ({ submit }));
+    const completeBuilt = vi.fn(async () => ({
+      sign: { withWallet: () => ({ complete: completeSigned }) },
+    } as unknown as TxSignBuilder));
+    let builder: Record<string, unknown>;
+    const chain = () => builder;
+    builder = {
+      collectFrom: chain,
+      mintAssets: chain,
+      pay: { ToContract: chain },
+      attach: { MintingPolicy: chain },
+      complete: completeBuilt,
+    };
+    const awaitTxConfirmation = vi.fn(async () => ({ status: "confirmed" }));
+    const lucid = {
+      utxosByOutRef: async () => [initializationUtxo],
+      wallet: () => ({ getUtxos: async () => [initializationUtxo] }),
+      newTx: () => builder,
+      awaitTxConfirmation,
+    } as unknown as LucidEvolution;
+
+    const result = await submitWalletInitialization(lucid, {
+      compiledCode: rawValidatorCode,
+      initializationRef,
+      initialState: input.state,
+      inventory: initialInventory(input),
+    });
+    expect(result.transactionId).toBe("cd".repeat(32));
     expect(submit).toHaveBeenCalledWith({ canonical: true });
     expect(awaitTxConfirmation).not.toHaveBeenCalled();
     await result.awaitConfirmation();

@@ -11,6 +11,11 @@ type CardanoConnector = {
   enable(): Promise<WalletApi>;
 };
 
+export type ConnectedWallet<T> = {
+  api: T;
+  wallet: PublicWallet;
+};
+
 export type ApprovalResult = {
   transactionId: string;
   approvalCount: 1 | 2;
@@ -53,6 +58,51 @@ function previewAddressFromHex(value: string): string {
     throw new WebFlowError("NP_WEB_WRONG_CARDANO_NETWORK");
   }
   return bech32.encode("addr_test", bech32.toWords(bytes), false);
+}
+
+export async function connectMidnightWallet(): Promise<ConnectedWallet<ConnectedAPI>> {
+  const connector = Object.values(window.midnight ?? {}).find(
+    (candidate): candidate is InitialAPI =>
+      Boolean(candidate && semver.satisfies(candidate.apiVersion, "4.x")),
+  );
+  if (!connector) throw new WebFlowError("NP_WEB_MIDNIGHT_WALLET_MISSING");
+  try {
+    const api = await connector.connect("preprod");
+    const status = await api.getConnectionStatus();
+    if (status.status !== "connected") throw new WebFlowError("NP_WEB_WALLET_REJECTED");
+    if (status.networkId !== "preprod") throw new WebFlowError("NP_WEB_WRONG_MIDNIGHT_NETWORK");
+    return {
+      api,
+      wallet: { name: connector.name ?? "Midnight Lace", network: "Midnight Preprod" },
+    };
+  } catch (error) {
+    if (error instanceof WebFlowError) throw error;
+    throw new WebFlowError("NP_WEB_WALLET_REJECTED", { cause: error });
+  }
+}
+
+export async function connectCardanoWallet(walletId?: string): Promise<ConnectedWallet<WalletApi>> {
+  const entries = (Object.entries(window.cardano ?? {}) as Array<[string, CardanoConnector]>).filter(
+    ([, connector]) => typeof connector.enable === "function",
+  );
+  const selected = walletId ? entries.find(([id]) => id === walletId) : entries[0];
+  if (!selected) throw new WebFlowError("NP_WEB_CARDANO_WALLET_MISSING");
+  try {
+    const api = await selected[1].enable();
+    if (await api.getNetworkId() !== 0) throw new WebFlowError("NP_WEB_WRONG_CARDANO_NETWORK");
+    const address = previewAddressFromHex(await api.getChangeAddress());
+    return {
+      api,
+      wallet: {
+        name: selected[1].name ?? selected[0],
+        network: "Cardano Preview",
+        address,
+      },
+    };
+  } catch (error) {
+    if (error instanceof WebFlowError) throw error;
+    throw new WebFlowError("NP_WEB_WALLET_REJECTED", { cause: error });
+  }
 }
 
 export function relayUrl(value: string, pageUrl = window.location.href): URL {
@@ -109,43 +159,14 @@ export function createBrowserRuntime(baseUrl: URL, bridge?: ProductBridge): AppR
   let cardanoWallet: WalletApi | undefined;
   return {
     async connectMidnight() {
-      const connector = Object.values(window.midnight ?? {}).find(
-        (candidate): candidate is InitialAPI =>
-          Boolean(candidate && semver.satisfies(candidate.apiVersion, "4.x")),
-      );
-      if (!connector) throw new WebFlowError("NP_WEB_MIDNIGHT_WALLET_MISSING");
-      try {
-        midnightWallet = await connector.connect("preprod");
-        const status = await midnightWallet.getConnectionStatus();
-        if (status.status !== "connected") throw new WebFlowError("NP_WEB_WALLET_REJECTED");
-        if (status.networkId !== "preprod") throw new WebFlowError("NP_WEB_WRONG_MIDNIGHT_NETWORK");
-        return { name: connector.name ?? "Midnight Lace", network: "Midnight Preprod" };
-      } catch (error) {
-        if (error instanceof WebFlowError) throw error;
-        throw new WebFlowError("NP_WEB_WALLET_REJECTED", { cause: error });
-      }
+      const connected = await connectMidnightWallet();
+      midnightWallet = connected.api;
+      return connected.wallet;
     },
     async connectCardano(walletId) {
-      const entries = (Object.entries(window.cardano ?? {}) as Array<[string, CardanoConnector]>).filter(
-        ([, connector]) => typeof connector.enable === "function",
-      );
-      const selected = walletId ? entries.find(([id]) => id === walletId) : entries[0];
-      if (!selected) throw new WebFlowError("NP_WEB_CARDANO_WALLET_MISSING");
-      try {
-        cardanoWallet = await selected[1].enable();
-        if (await cardanoWallet.getNetworkId() !== 0) {
-          throw new WebFlowError("NP_WEB_WRONG_CARDANO_NETWORK");
-        }
-        const address = previewAddressFromHex(await cardanoWallet.getChangeAddress());
-        return {
-          name: selected[1].name ?? selected[0],
-          network: "Cardano Preview",
-          address,
-        };
-      } catch (error) {
-        if (error instanceof WebFlowError) throw error;
-        throw new WebFlowError("NP_WEB_WALLET_REJECTED", { cause: error });
-      }
+      const connected = await connectCardanoWallet(walletId);
+      cardanoWallet = connected.api;
+      return connected.wallet;
     },
     async approve(access) {
       if (!midnightWallet || !bridge) {

@@ -1,8 +1,10 @@
 import type { EntitlementPolicy, RelayConfig } from "../src/config.js";
 import type { AuthorizationSnapshot, AuthorizationSource } from "../src/midnight.js";
 import type { SlotSource } from "../src/ogmios.js";
+import { getRelayPublicKey } from "@nightpermit/permit";
 
 export const signingSeed = "10".repeat(32);
+export const relayPublicKey = await getRelayPublicKey(signingSeed);
 export const transactionId = "20".repeat(32);
 
 export const policy: EntitlementPolicy = {
@@ -26,6 +28,7 @@ export const config: RelayConfig = {
   midnightContractId: "40".repeat(32),
   ogmiosUrl: new URL("http://127.0.0.1:1337"),
   relayKeyId: "41".repeat(32),
+  relayPublicKey,
   relaySigningSeed: signingSeed,
   relayStateFile: "/tmp/nightpermit-relay-test-state.json",
   permitTtlSlots: 600n,

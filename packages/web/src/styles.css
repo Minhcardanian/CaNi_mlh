@@ -69,6 +69,23 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
 .status--ok::before { content: "●"; }
 .trust-note { margin: auto 0 0; padding-top: 17px; color: #829f98; font-size: 12px; line-height: 1.45; }
 .trust-note strong { display: block; margin-bottom: 4px; color: #c4d9d4; }
+.ceremony-note { max-width: 420px; margin: 0; color: #a8c2bc; line-height: 1.55; }
+.ceremony { max-width: 1000px; margin: auto; border: 1px solid #2b4b45; border-radius: 12px; background: #0b211e; overflow: hidden; }
+.ceremony-steps { display: flex; gap: 8px; padding: 14px 18px; border-bottom: 1px solid #2b4b45; overflow-x: auto; }
+.ceremony-steps span { min-width: max-content; padding: 7px 10px; border-radius: 20px; color: #79968f; font-size: 12px; text-transform: capitalize; }
+.ceremony-steps .active { background: #163b34; color: #8defd6; }
+.ceremony-panel { padding: 32px clamp(22px, 5vw, 64px) 40px; }
+.ceremony-panel .primary { margin-top: 20px; }
+.field { display: grid; gap: 8px; margin: 20px 0; color: #d9e9e5; font-size: 13px; font-weight: 700; }
+.field textarea, .field input, .field select { width: 100%; border: 1px solid #41655e; border-radius: 6px; background: #071a18; color: #f4fbf9; padding: 11px; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.field textarea { resize: vertical; }
+.review-record { margin: 22px 0; }
+.review-record div { display: grid; grid-template-columns: 180px 1fr; gap: 18px; padding: 10px 0; border-bottom: 1px solid #24423d; }
+.review-record dt { color: #829f98; font-size: 12px; }
+.review-record dd { margin: 0; color: #d9e9e5; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.public-output { margin-top: 20px; }
+.public-output h3 { margin: 0 0 8px; font-size: 14px; }
+.public-output pre { max-height: 320px; margin: 0; padding: 16px; overflow: auto; border: 1px solid #31544d; border-radius: 7px; background: #071a18; color: #bfe4da; font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 @media (max-width: 960px) {
   main { padding-inline: 20px; }
@@ -79,6 +96,7 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
 @media (max-width: 680px) {
   .networks { display: none; }
   .hero { align-items: start; flex-direction: column; gap: 25px; }
+  .ceremony-note { max-width: none; }
   .progress { width: 100%; text-align: left; }
   .workspace { display: block; }
   .stages { display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid #2b4b45; }
@@ -87,5 +105,6 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
   .wallet-row { align-items: stretch; flex-direction: column; }
   .primary { min-width: 0; width: 100%; }
   .evidence dl { display: block; }
+  .review-record div { grid-template-columns: 1fr; gap: 5px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }

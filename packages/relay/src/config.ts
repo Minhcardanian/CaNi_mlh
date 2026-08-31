@@ -1,6 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
-import { decodeFixedHex, type Hex } from "@nightpermit/permit";
+import { decodeFixedHex, getRelayPublicKey, type Hex } from "@nightpermit/permit";
 import { RelayError } from "./errors.js";
 import { decimalBigInt, exactKeys, hex, integer, object } from "./validation.js";
 
@@ -25,6 +25,7 @@ export type RelayConfig = {
   midnightContractId: Hex;
   ogmiosUrl: URL;
   relayKeyId: Hex;
+  relayPublicKey: Hex;
   relaySigningSeed: Hex;
   relayStateFile: string;
   permitTtlSlots: bigint;
@@ -42,6 +43,7 @@ const ENV_KEYS = [
   "MIDNIGHT_CONTRACT_ID",
   "OGMIOS_URL",
   "RELAY_KEY_ID",
+  "RELAY_PUBLIC_KEY",
   "RELAY_PRIVATE_KEY_FILE",
   "RELAY_STATE_FILE",
   "RELAY_POLICY_FILE",
@@ -180,6 +182,11 @@ export async function loadConfig(env: NodeJS.ProcessEnv = process.env): Promise<
   if (required(env, "MIDNIGHT_NETWORK") !== "preprod") {
     configurationError("MIDNIGHT_NETWORK must be preprod");
   }
+  const relaySigningSeed = await readSigningSeed(required(env, "RELAY_PRIVATE_KEY_FILE"));
+  const relayPublicKey = parseConfigHex(required(env, "RELAY_PUBLIC_KEY"), 32, "RELAY_PUBLIC_KEY");
+  if (await getRelayPublicKey(relaySigningSeed) !== relayPublicKey) {
+    configurationError("RELAY_PRIVATE_KEY_FILE does not match RELAY_PUBLIC_KEY");
+  }
   return {
     host: "127.0.0.1",
     port: parseInteger(required(env, "RELAY_PORT"), 1024, 65_535, "RELAY_PORT"),
@@ -189,7 +196,8 @@ export async function loadConfig(env: NodeJS.ProcessEnv = process.env): Promise<
     midnightContractId: parseConfigHex(required(env, "MIDNIGHT_CONTRACT_ID"), 32, "MIDNIGHT_CONTRACT_ID"),
     ogmiosUrl: parseUrl(required(env, "OGMIOS_URL"), ["http:", "https:"], "OGMIOS_URL"),
     relayKeyId: parseConfigHex(required(env, "RELAY_KEY_ID"), 32, "RELAY_KEY_ID"),
-    relaySigningSeed: await readSigningSeed(required(env, "RELAY_PRIVATE_KEY_FILE")),
+    relayPublicKey,
+    relaySigningSeed,
     relayStateFile: resolve(required(env, "RELAY_STATE_FILE")),
     permitTtlSlots: BigInt(parseInteger(required(env, "PERMIT_TTL_SLOTS"), 1, 3_600, "PERMIT_TTL_SLOTS")),
     providerTimeoutMs: parseInteger(required(env, "RELAY_PROVIDER_TIMEOUT_MS"), 100, 10_000, "RELAY_PROVIDER_TIMEOUT_MS"),

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { loadConfig } from "../src/config.js";
-import { policy, signingSeed } from "./fixtures.js";
+import { policy, relayPublicKey, signingSeed } from "./fixtures.js";
 
 const directories: string[] = [];
 
@@ -38,6 +38,7 @@ function environment(paths: { key: string; policy: string; state: string }): Nod
     MIDNIGHT_CONTRACT_ID: "40".repeat(32),
     OGMIOS_URL: "http://127.0.0.1:1337",
     RELAY_KEY_ID: "41".repeat(32),
+    RELAY_PUBLIC_KEY: relayPublicKey,
     RELAY_PRIVATE_KEY_FILE: paths.key,
     RELAY_STATE_FILE: paths.state,
     RELAY_POLICY_FILE: paths.policy,
@@ -54,6 +55,7 @@ describe("relay configuration", () => {
     expect(config.host).toBe("127.0.0.1");
     expect(config.policies.get(policy.policyId)).toEqual(policy);
     expect(config.relaySigningSeed).toBe(signingSeed);
+    expect(config.relayPublicKey).toBe(relayPublicKey);
   });
 
   it("rejects a signing seed file readable by group or others", async () => {
@@ -62,6 +64,14 @@ describe("relay configuration", () => {
     await expect(loadConfig(environment(paths))).rejects.toMatchObject({
       code: "NP_RELAY_CONFIGURATION_INVALID",
     });
+  });
+
+  it("rejects a signing seed that does not derive the expected public key", async () => {
+    const paths = await files();
+    await expect(loadConfig({
+      ...environment(paths),
+      RELAY_PUBLIC_KEY: "ff".repeat(32),
+    })).rejects.toMatchObject({ code: "NP_RELAY_CONFIGURATION_INVALID" });
   });
 
   it.each([

@@ -1,8 +1,8 @@
 import type { WalletApi } from "@lucid-evolution/core-types";
 import type { ConnectedAPI } from "@midnight-ntwrk/dapp-connector-api";
-import { validatePassword } from "@midnight-ntwrk/midnight-js-utils";
 import { WebFlowError } from "./errors.js";
 import { secureProviderEndpoint } from "./provider-url.js";
+import { parseReviewerSecret } from "./reviewer-access.js";
 import type { ProductBridge, ReviewerAccess } from "./runtime.js";
 
 export type BrowserProductConfig = {
@@ -57,23 +57,10 @@ export function productConfigFromEnvironment(
   };
 }
 
-function reviewerSecret(access: ReviewerAccess): Uint8Array | undefined {
-  try {
-    validatePassword(access.privateStoragePassword);
-  } catch (cause) {
-    throw new WebFlowError("NP_WEB_BAD_STORAGE_PASSWORD", { cause });
-  }
-  if (access.reviewerSecretHex === undefined) return undefined;
-  if (!/^[0-9a-f]{64}$/.test(access.reviewerSecretHex)) {
-    throw new WebFlowError("NP_WEB_BAD_REVIEWER_SECRET");
-  }
-  return Uint8Array.from(access.reviewerSecretHex.match(/.{2}/g)!, (byte) => Number.parseInt(byte, 16));
-}
-
 export function createProductBridge(config: BrowserProductConfig): ProductBridge {
   return {
     async approve(connectedWallet: ConnectedAPI, access: ReviewerAccess) {
-      const secret = reviewerSecret(access);
+      const secret = parseReviewerSecret(access);
       const [{ createMidnightBrowserProviders }, { joinNightPermit }] = await Promise.all([
         import("./midnight-browser.js"),
         import("@nightpermit/midnight-client"),

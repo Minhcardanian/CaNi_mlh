@@ -1,0 +1,25 @@
+{
+  "name": "@nightpermit/deployment",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "npm run build:dependencies && tsc -p tsconfig.build.json",
+    "build:dependencies": "npm run build --workspace=@nightpermit/cardano-client && npm run build --workspace=@nightpermit/midnight-client && npm run build --workspace=@nightpermit/permit",
+    "check": "npm run build:dependencies && tsc -p tsconfig.json --noEmit",
+    "test": "npm run build:dependencies && vitest run"
+  },
+  "dependencies": {
+    "@lucid-evolution/lucid": "0.6.2",
+    "@nightpermit/cardano-client": "0.1.0",
+    "@nightpermit/midnight-client": "0.1.0",
+    "@nightpermit/permit": "0.1.0"
+  }
+}

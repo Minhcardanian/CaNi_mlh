@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run build:dependencies && tsc -p tsconfig.build.json && vite build && node scripts/check-initial-bundle.mjs",
-    "build:dependencies": "npm run build --workspace=@nightpermit/cardano-client && npm run build --workspace=@nightpermit/midnight-client && npm run build --workspace=@nightpermit/permit",
+    "build:dependencies": "npm run build --workspace=@nightpermit/deployment && npm run build --workspace=@nightpermit/cardano-client && npm run build --workspace=@nightpermit/midnight-client && npm run build --workspace=@nightpermit/permit",
     "check": "npm run build:dependencies && tsc -p tsconfig.json --noEmit",
     "test": "npm run build:dependencies && vitest run"
   },
@@ -21,6 +21,7 @@
     "@midnight-ntwrk/midnight-js-types": "4.1.1",
     "@midnight-ntwrk/midnight-js-utils": "4.1.1",
     "@nightpermit/cardano-client": "0.1.0",
+    "@nightpermit/deployment": "0.1.0",
     "@nightpermit/midnight-client": "0.1.0",
     "@nightpermit/permit": "0.1.0",
     "@scure/base": "2.4.0",

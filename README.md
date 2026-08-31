@@ -36,12 +36,13 @@ Beneficiary wallet -----> Cardano Aiken validator (Preview)
                               exact milestone payout
 ```
 
-The application is split into five bounded components:
+The application is split into six bounded components:
 
 - **Web application:** guides the three-stage review, authorization, and claim flow while keeping Midnight and Cardano network state explicit.
 - **Midnight contract:** enforces the authorized-reviewer set, two-distinct-reviewer threshold, private witness rules, and authorization nullifier behavior.
 - **Attestation relay:** reads only the allowlisted Midnight contract, maps confirmed state to a server-controlled entitlement, emits canonical permit bytes, and signs them with Ed25519.
 - **Cardano validator:** verifies the signed permit and transaction shape, then advances a unique state output so a nullifier cannot be paid twice.
+- **Deployment coordinator:** derives one immutable public policy binding, deploys Midnight before initializing Cardano, and emits the public browser and relay configuration only after confirmation.
 - **Shared protocol package:** defines the versioned permit schema, canonical encoding, golden vectors, identifiers, and error contracts used across TypeScript and Aiken.
 
 ## Trust boundary
@@ -69,6 +70,8 @@ npm run build
 ```
 
 The shared `@nightpermit/permit` package owns the canonical binary codec and Ed25519 envelope. The Cardano component consumes the same golden vectors and enforces the state-thread payout transition. The binary layout and trust boundary are documented in [docs/protocol/permit-v1.md](docs/protocol/permit-v1.md); component behavior is documented alongside the [Midnight contract](packages/midnight-contract/README.md), [relay](packages/relay/README.md), [Cardano validator](contracts/cardano/README.md), [Cardano transaction client](packages/cardano-client/README.md), and [web application](packages/web/README.md).
+
+Local Cardano provider topology and startup are documented in [infra/README.md](infra/README.md).
 
 ## Project state
 
