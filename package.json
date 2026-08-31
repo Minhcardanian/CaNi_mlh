@@ -11,9 +11,15 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "check": "npm run check --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "build": "npm run build:node && npm run build:cardano",
+    "build:cardano": "cd contracts/cardano && aiken build",
+    "build:node": "npm run build --workspaces --if-present",
+    "check": "npm run check:node && npm run check:cardano",
+    "check:cardano": "cd contracts/cardano && aiken fmt --check",
+    "check:node": "npm run check --workspaces --if-present",
+    "test": "npm run test:node && npm run test:cardano",
+    "test:cardano": "cd contracts/cardano && aiken check -D",
+    "test:node": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
     "@types/node": "24.10.0",

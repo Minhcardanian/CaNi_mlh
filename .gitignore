@@ -29,6 +29,7 @@ dist/
 build/
 coverage/
 *.tsbuildinfo
+plutus.json
 
 # Logs and temporary files
 *.log

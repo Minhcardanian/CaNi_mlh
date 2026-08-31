@@ -59,7 +59,7 @@ Private reviewer witnesses remain on the Midnight side. Public logs and UI state
 
 ## Development
 
-Node `24.11.1` is the pinned JavaScript runtime. From the repository root:
+Node `24.11.1` and Aiken `1.1.13` are pinned. From the repository root:
 
 ```bash
 npm ci
@@ -68,8 +68,8 @@ npm test
 npm run build
 ```
 
-The first implemented component is `@nightpermit/permit`, the shared canonical binary codec and Ed25519 envelope used by the relay and Cardano validator. Its binary layout and trust boundary are documented in [docs/protocol/permit-v1.md](docs/protocol/permit-v1.md).
+The shared `@nightpermit/permit` package owns the canonical binary codec and Ed25519 envelope. The Cardano component consumes the same golden vectors and enforces the state-thread payout transition. The binary layout and trust boundary are documented in [docs/protocol/permit-v1.md](docs/protocol/permit-v1.md); Cardano contract behavior is documented in [contracts/cardano/README.md](contracts/cardano/README.md).
 
 ## Project state
 
-The infrastructure baseline and versioned permit protocol are implemented. Midnight contract, relay, Cardano validator, and web application work remain in progress.
+The infrastructure baseline, versioned permit protocol, and Cardano validator are implemented and locally tested. Midnight contract, relay, transaction-building integration, and web application work remain in progress.

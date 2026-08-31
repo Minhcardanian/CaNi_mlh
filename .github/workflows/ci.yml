@@ -14,8 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  permit:
-    name: Permit protocol
+  protocol:
+    name: Permit and Cardano protocol
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -26,6 +26,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: Set up Aiken
+        uses: aiken-lang/setup-aiken@v1
+        with:
+          version: v1.1.13
       - name: Install locked dependencies
         run: npm ci
       - name: Type-check
