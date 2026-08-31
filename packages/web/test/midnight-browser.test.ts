@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { createMidnightBrowserProviders, secureProviderEndpoint } from "../src/midnight-browser.js";
+import { createMidnightBrowserProviders } from "../src/midnight-browser.js";
+import { secureProviderEndpoint } from "../src/provider-url.js";
 
 describe("Midnight browser providers", () => {
   it("accepts secure or local provider endpoints and rejects unsafe metadata", () => {

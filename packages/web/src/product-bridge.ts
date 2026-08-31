@@ -1,11 +1,8 @@
 import type { WalletApi } from "@lucid-evolution/core-types";
-import { Kupmios, Lucid } from "@lucid-evolution/lucid";
 import type { ConnectedAPI } from "@midnight-ntwrk/dapp-connector-api";
 import { validatePassword } from "@midnight-ntwrk/midnight-js-utils";
-import { parameterizeValidator, submitWalletClaim } from "@nightpermit/cardano-client";
-import { joinNightPermit } from "@nightpermit/midnight-client";
 import { WebFlowError } from "./errors.js";
-import { createMidnightBrowserProviders, secureProviderEndpoint } from "./midnight-browser.js";
+import { secureProviderEndpoint } from "./provider-url.js";
 import type { ProductBridge, ReviewerAccess } from "./runtime.js";
 
 export type BrowserProductConfig = {
@@ -74,18 +71,13 @@ function reviewerSecret(access: ReviewerAccess): Uint8Array | undefined {
 }
 
 export function createProductBridge(config: BrowserProductConfig): ProductBridge {
-  let validator;
-  try {
-    validator = parameterizeValidator(config.cardanoValidatorCompiledCode, {
-      txHash: config.cardanoInitializationTxHash,
-      outputIndex: config.cardanoInitializationOutputIndex,
-    });
-  } catch (cause) {
-    throw new WebFlowError("NP_WEB_RUNTIME_NOT_CONFIGURED", { cause });
-  }
   return {
     async approve(connectedWallet: ConnectedAPI, access: ReviewerAccess) {
       const secret = reviewerSecret(access);
+      const [{ createMidnightBrowserProviders }, { joinNightPermit }] = await Promise.all([
+        import("./midnight-browser.js"),
+        import("@nightpermit/midnight-client"),
+      ]);
       const providers = await createMidnightBrowserProviders(connectedWallet, {
         artifactBaseUrl: config.midnightArtifactBaseUrl,
         privateStoragePasswordProvider: () => access.privateStoragePassword,
@@ -94,6 +86,19 @@ export function createProductBridge(config: BrowserProductConfig): ProductBridge
       return api.approve();
     },
     async claim(wallet: WalletApi, permit) {
+      const [{ Kupmios, Lucid }, { parameterizeValidator, submitWalletClaim }] = await Promise.all([
+        import("@lucid-evolution/lucid"),
+        import("@nightpermit/cardano-client"),
+      ]);
+      let validator;
+      try {
+        validator = parameterizeValidator(config.cardanoValidatorCompiledCode, {
+          txHash: config.cardanoInitializationTxHash,
+          outputIndex: config.cardanoInitializationOutputIndex,
+        });
+      } catch (cause) {
+        throw new WebFlowError("NP_WEB_RUNTIME_NOT_CONFIGURED", { cause });
+      }
       const provider = new Kupmios(config.cardanoKupoUrl, config.cardanoOgmiosUrl);
       const lucid = await Lucid(provider, "Preview");
       lucid.selectWallet.fromAPI(wallet);

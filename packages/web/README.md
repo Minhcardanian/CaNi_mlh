@@ -8,4 +8,6 @@ The deployment uses public Vite configuration for the relay, deployed Midnight c
 
 At runtime, the provider bridge joins the deployed Compact contract through the connected Midnight wallet, stores reviewer state in encrypted account-and-contract-scoped browser storage, and observes the exact approval transaction before advancing. The claim side discovers the unique Cardano state UTxO, rebuilds the parameterized validator, asks the CIP-30 wallet to sign, submits once, and tracks confirmation separately.
 
+Midnight and Cardano SDKs load only when their flow stage needs them. The production build enforces the 500 KiB initial compressed-JavaScript budget from the Vite manifest while leaving proving and ledger WASM as separate lazy assets.
+
 Wallet keys remain in their extensions. The reviewer secret is separately provisioned DApp state, and the storage password is supplied only for the active authorization operation. A second approval requires a distinct reviewer identity and separately recovered state.

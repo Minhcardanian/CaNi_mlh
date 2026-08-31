@@ -54,4 +54,14 @@ describe("browser product configuration", () => {
       reviewerSecretHex: "AA".repeat(32),
     })).rejects.toMatchObject({ code: "NP_WEB_BAD_REVIEWER_SECRET" });
   });
+
+  it("defers Cardano SDK and validator initialization until the claim stage", async () => {
+    const bridge = createProductBridge(productConfigFromEnvironment({
+      ...validEnvironment,
+      VITE_CARDANO_VALIDATOR_COMPILED_CODE: "590100",
+    }, "https://app.example.test/"));
+    await expect(bridge.claim({} as never, {} as never)).rejects.toMatchObject({
+      code: "NP_WEB_RUNTIME_NOT_CONFIGURED",
+    });
+  });
 });

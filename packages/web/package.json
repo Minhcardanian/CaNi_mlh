@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "npm run build:dependencies && tsc -p tsconfig.build.json && vite build",
+    "build": "npm run build:dependencies && tsc -p tsconfig.build.json && vite build && node scripts/check-initial-bundle.mjs",
     "build:dependencies": "npm run build --workspace=@nightpermit/cardano-client && npm run build --workspace=@nightpermit/midnight-client && npm run build --workspace=@nightpermit/permit",
     "check": "npm run build:dependencies && tsc -p tsconfig.json --noEmit",
     "test": "npm run build:dependencies && vitest run"
