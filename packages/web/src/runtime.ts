@@ -41,7 +41,12 @@ export type AppRuntime = {
   connectMidnight(): Promise<PublicWallet>;
   connectCardano(walletId?: string): Promise<PublicWallet>;
   approve(access: ReviewerAccess): Promise<ApprovalResult>;
-  getPermit(midnightTxId: string): Promise<{ permit: PermitEnvelope; correlationId: string }>;
+  getPermit(midnightTxId: string): Promise<{
+    permit: PermitEnvelope;
+    correlationId: string;
+    nullifier: string;
+    relayVerified: true;
+  }>;
   claim(permit: PermitEnvelope): Promise<ClaimResult>;
 };
 
@@ -154,7 +159,11 @@ async function fetchJson(url: URL): Promise<unknown> {
   }
 }
 
-export function createBrowserRuntime(baseUrl: URL, bridge?: ProductBridge): AppRuntime {
+export function createBrowserRuntime(
+  baseUrl: URL,
+  bridge?: ProductBridge,
+  expectedRelayPublicKey?: string,
+): AppRuntime {
   let midnightWallet: ConnectedAPI | undefined;
   let cardanoWallet: WalletApi | undefined;
   return {
@@ -176,7 +185,25 @@ export function createBrowserRuntime(baseUrl: URL, bridge?: ProductBridge): AppR
     },
     async getPermit(midnightTxId) {
       if (!/^[0-9a-f]{64}$/.test(midnightTxId)) throw new WebFlowError("NP_WEB_UNEXPECTED");
-      return parsePermitResponse(await fetchJson(new URL(`/v1/permits/${midnightTxId}`, baseUrl)));
+      if (!expectedRelayPublicKey) throw new WebFlowError("NP_WEB_RUNTIME_NOT_CONFIGURED");
+      const result = parsePermitResponse(await fetchJson(new URL(`/v1/permits/${midnightTxId}`, baseUrl)));
+      const { decodeHex, decodePermit, encodeHex, hashPermit, verifyPermitSignature } = await import("@nightpermit/permit");
+      try {
+        const bytes = decodeHex(result.permit.permitBytes);
+        if (result.permit.relayPublicKey !== expectedRelayPublicKey ||
+          encodeHex(hashPermit(bytes)) !== result.permit.permitHash ||
+          !await verifyPermitSignature(bytes, result.permit.signature, expectedRelayPublicKey)) {
+          throw new WebFlowError("NP_WEB_INVALID_RELAY_ENVELOPE");
+        }
+        return {
+          ...result,
+          nullifier: decodePermit(bytes).nullifier,
+          relayVerified: true,
+        };
+      } catch (cause) {
+        if (cause instanceof WebFlowError) throw cause;
+        throw new WebFlowError("NP_WEB_INVALID_RELAY_ENVELOPE", { cause });
+      }
     },
     async claim(permit) {
       if (!cardanoWallet || !bridge) {

@@ -169,7 +169,9 @@ export function App({ runtime }: { runtime: AppRuntime }) {
             <div><dt>Threshold</dt><dd>{state.approvalCount} / 2</dd></div>
             <div><dt>Midnight transaction</dt><dd title={state.midnightTxId}>{short(state.midnightTxId)}</dd></div>
             <div><dt>Permit hash</dt><dd title={state.permit?.permitHash}>{short(state.permit?.permitHash)}</dd></div>
-            <div><dt>Relay signature</dt><dd>{state.permit ? <Status ok>Present</Status> : "Not available"}</dd></div>
+            <div><dt>Authorization nullifier</dt><dd title={state.nullifier}>{short(state.nullifier)}</dd></div>
+            <div><dt>Relay signature</dt><dd>{state.relayVerified ? <Status ok>Verified</Status> : "Not verified"}</dd></div>
+            <div><dt>Correlation ID</dt><dd title={state.correlationId}>{short(state.correlationId)}</dd></div>
             <div><dt>Cardano transaction</dt><dd title={state.cardanoTxId}>{short(state.cardanoTxId)}</dd></div>
             <div><dt>Final state</dt><dd><Status ok={state.confirmed}>{state.confirmed ? "Confirmed" : "Not confirmed"}</Status></dd></div>
           </dl>

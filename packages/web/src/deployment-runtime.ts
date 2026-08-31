@@ -7,6 +7,7 @@ import type {
   PreparedDeployment,
 } from "@nightpermit/deployment";
 import { WebFlowError } from "./errors.js";
+import { cardanoProviderEndpoints, createPreviewLucid } from "./cardano-provider.js";
 import { createMidnightBrowserProviders } from "./midnight-browser.js";
 import { secureProviderEndpoint } from "./provider-url.js";
 import { parseReviewerSecret } from "./reviewer-access.js";
@@ -22,6 +23,8 @@ export type DeploymentRuntimeConfig = {
   midnightArtifactBaseUrl: URL;
   cardanoKupoUrl: string;
   cardanoOgmiosUrl: string;
+  cardanoFallbackKupoUrl?: string;
+  cardanoFallbackOgmiosUrl?: string;
   relayUrl: string;
 };
 
@@ -52,8 +55,13 @@ export type DeploymentRuntime = {
 export function createDeploymentRuntime(config: DeploymentRuntimeConfig): DeploymentRuntime {
   const endpoints = {
     midnightArtifactBaseUrl: new URL(secureProviderEndpoint(config.midnightArtifactBaseUrl.href)),
-    cardanoKupoUrl: secureProviderEndpoint(config.cardanoKupoUrl),
-    cardanoOgmiosUrl: secureProviderEndpoint(config.cardanoOgmiosUrl),
+    cardanoProviders: cardanoProviderEndpoints({
+      kupoUrl: config.cardanoKupoUrl,
+      ogmiosUrl: config.cardanoOgmiosUrl,
+    }, {
+      kupoUrl: config.cardanoFallbackKupoUrl,
+      ogmiosUrl: config.cardanoFallbackOgmiosUrl,
+    }),
     relayUrl: secureProviderEndpoint(config.relayUrl),
   };
   let midnightWallet: ConnectedAPI | undefined;
@@ -65,9 +73,7 @@ export function createDeploymentRuntime(config: DeploymentRuntimeConfig): Deploy
   async function cardanoLucid(): Promise<LucidEvolution> {
     if (!cardanoWallet) throw new WebFlowError("NP_WEB_CARDANO_WALLET_MISSING");
     if (!lucid) {
-      const { Kupmios, Lucid } = await import("@lucid-evolution/lucid");
-      lucid = await Lucid(new Kupmios(endpoints.cardanoKupoUrl, endpoints.cardanoOgmiosUrl), "Preview");
-      lucid.selectWallet.fromAPI(cardanoWallet);
+      lucid = (await createPreviewLucid(endpoints.cardanoProviders, cardanoWallet)).lucid;
     }
     return lucid;
   }
@@ -156,13 +162,17 @@ export function createDeploymentRuntime(config: DeploymentRuntimeConfig): Deploy
         browserEnvironment: browserEnvironment(finalized, {
           relayUrl: endpoints.relayUrl,
           midnightArtifactBaseUrl: endpoints.midnightArtifactBaseUrl.href,
-          cardanoKupoUrl: endpoints.cardanoKupoUrl,
-          cardanoOgmiosUrl: endpoints.cardanoOgmiosUrl,
+          cardanoKupoUrl: endpoints.cardanoProviders[0]!.kupoUrl,
+          cardanoOgmiosUrl: endpoints.cardanoProviders[0]!.ogmiosUrl,
+          ...(endpoints.cardanoProviders[1] ? {
+            cardanoFallbackKupoUrl: endpoints.cardanoProviders[1].kupoUrl,
+            cardanoFallbackOgmiosUrl: endpoints.cardanoProviders[1].ogmiosUrl,
+          } : {}),
         }),
         relayEnvironment: relayPublicEnvironment(finalized, {
           midnightIndexerUrl: secureProviderEndpoint(configuration.indexerUri),
           midnightIndexerWsUrl: secureProviderEndpoint(configuration.indexerWsUri, true),
-          cardanoOgmiosUrl: endpoints.cardanoOgmiosUrl,
+          cardanoOgmiosUrl: endpoints.cardanoProviders[0]!.ogmiosUrl,
         }),
         relayPolicy: relayPolicyDocument(finalized),
       };

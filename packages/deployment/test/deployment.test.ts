@@ -56,10 +56,14 @@ describe("public deployment plan", () => {
       midnightArtifactBaseUrl: "http://127.0.0.1:4173/",
       cardanoKupoUrl: "http://127.0.0.1:1442",
       cardanoOgmiosUrl: "http://127.0.0.1:1337",
+      cardanoFallbackKupoUrl: "https://kupo.example.test",
+      cardanoFallbackOgmiosUrl: "https://ogmios.example.test",
     })).toMatchObject({
       VITE_MIDNIGHT_CONTRACT_ID: hex("22"),
+      VITE_RELAY_PUBLIC_KEY: hex("20"),
       VITE_CARDANO_INITIALIZATION_TX_HASH: hex("21"),
       VITE_CARDANO_INITIALIZATION_OUTPUT_INDEX: "1",
+      VITE_CARDANO_FALLBACK_KUPO_URL: "https://kupo.example.test",
     });
   });
 

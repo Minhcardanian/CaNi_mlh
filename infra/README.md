@@ -12,3 +12,17 @@ docker compose --env-file .env -f infra/compose.cardano-providers.yaml ps
 ```
 
 The environment file and Kupo database are local runtime state and must not be committed. A healthy Kupo response must report connection to the configured Preview node before wallet or transaction evidence is collected.
+
+Run the bounded product-provider readiness check after the services start:
+
+```bash
+npm run readiness -- --providers
+```
+
+This verifies the proof server, Midnight Preprod RPC and indexer, Kupo, Ogmios, and exact Kupo/Ogmios tip agreement. The full check also requires a configured running relay:
+
+```bash
+npm run readiness
+```
+
+The browser accepts an optional second Kupo/Ogmios pair through `VITE_CARDANO_FALLBACK_KUPO_URL` and `VITE_CARDANO_FALLBACK_OGMIOS_URL`. Both values are required together. A remote pair must use HTTPS, expose no embedded credential, and implement the same Preview Kupmios interfaces. Failover happens only before wallet transaction construction; NightPermit never automatically retries a signature or submission against another provider.

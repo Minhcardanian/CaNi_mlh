@@ -27,7 +27,12 @@ describe("NightPermit application", () => {
         approvalCount: 2 as const,
         authorized: true,
       })),
-      getPermit: vi.fn(async () => ({ permit, correlationId: "correlation-01" })),
+      getPermit: vi.fn(async () => ({
+        permit,
+        correlationId: "correlation-01",
+        nullifier: "05".repeat(32),
+        relayVerified: true as const,
+      })),
       claim: vi.fn(async () => ({
         transactionId: "12".repeat(32),
         awaitConfirmation: async () => undefined,
@@ -48,7 +53,8 @@ describe("NightPermit application", () => {
     expect(screen.getByText("2 / 2")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Get signed permit" }));
-    await screen.findByText("Present");
+    await screen.findByText("Verified");
+    expect(screen.getByText("correlation-01")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Review and claim on Cardano" }));
     await screen.findByRole("heading", { name: "Milestone paid once" });
     await waitFor(() => expect(screen.getAllByText("Confirmed").length).toBeGreaterThan(0));

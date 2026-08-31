@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createProductBridge, productConfigFromEnvironment } from "../src/product-bridge.js";
 
 const validEnvironment = {
+  VITE_RELAY_PUBLIC_KEY: "09".repeat(32),
   VITE_MIDNIGHT_CONTRACT_ID: "10".repeat(32),
   VITE_MIDNIGHT_ARTIFACT_BASE_URL: "/proof/",
   VITE_CARDANO_KUPO_URL: "http://127.0.0.1:1442",
@@ -15,14 +16,32 @@ const validEnvironment = {
 describe("browser product configuration", () => {
   it("parses only public deployment parameters", () => {
     expect(productConfigFromEnvironment(validEnvironment, "https://app.example.test/nightpermit/")).toEqual({
+      relayPublicKey: "09".repeat(32),
       midnightContractId: "10".repeat(32),
       midnightArtifactBaseUrl: new URL("https://app.example.test/proof/"),
-      cardanoKupoUrl: "http://127.0.0.1:1442/",
-      cardanoOgmiosUrl: "http://localhost:1337/",
+      cardanoProviders: [{
+        name: "primary",
+        kupoUrl: "http://127.0.0.1:1442/",
+        ogmiosUrl: "http://localhost:1337/",
+      }],
       cardanoValidatorCompiledCode: "4e4d01000033222220051200120011",
       cardanoInitializationTxHash: "20".repeat(32),
       cardanoInitializationOutputIndex: 1,
     });
+  });
+
+  it("requires a complete secure fallback provider pair", () => {
+    expect(() => productConfigFromEnvironment({
+      ...validEnvironment,
+      VITE_CARDANO_FALLBACK_KUPO_URL: "https://fallback-kupo.example.test",
+    }, "https://app.example.test/")).toThrowError(expect.objectContaining({
+      code: "NP_WEB_RUNTIME_NOT_CONFIGURED",
+    }));
+    expect(productConfigFromEnvironment({
+      ...validEnvironment,
+      VITE_CARDANO_FALLBACK_KUPO_URL: "https://fallback-kupo.example.test",
+      VITE_CARDANO_FALLBACK_OGMIOS_URL: "https://fallback-ogmios.example.test",
+    }, "https://app.example.test/").cardanoProviders).toHaveLength(2);
   });
 
   it("rejects missing, malformed, or unsafe deployment parameters", () => {

@@ -25,6 +25,14 @@ const messages: Record<string, Omit<FlowError, "code">> = {
     message: "This deployment is missing its public contract runtime configuration.",
     retryable: false,
   },
+  NP_WEB_CARDANO_PROVIDER_UNAVAILABLE: {
+    message: "Cardano Preview providers are unavailable. No transaction was submitted; try again after provider recovery.",
+    retryable: true,
+  },
+  NP_WEB_INVALID_RELAY_ENVELOPE: {
+    message: "The relay envelope failed public hash or signature verification. No Cardano transaction was built.",
+    retryable: false,
+  },
   NP_WEB_BAD_STORAGE_PASSWORD: {
     message: "Use an encrypted-storage password of at least 16 characters with three character types and no simple sequences.",
     retryable: true,

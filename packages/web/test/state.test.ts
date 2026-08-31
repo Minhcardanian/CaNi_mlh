@@ -50,6 +50,8 @@ describe("flow state machine", () => {
       type: "PERMIT_RECEIVED",
       permit,
       correlationId: "correlation-01",
+      nullifier: "05".repeat(32),
+      relayVerified: true,
     });
     expect(state.permit).toBeUndefined();
   });
@@ -62,7 +64,13 @@ describe("flow state machine", () => {
       authorized: true,
       transactionId: "12".repeat(32),
     });
-    state = flowReducer(state, { type: "PERMIT_RECEIVED", permit, correlationId: "correlation-01" });
+    state = flowReducer(state, {
+      type: "PERMIT_RECEIVED",
+      permit,
+      correlationId: "correlation-01",
+      nullifier: "05".repeat(32),
+      relayVerified: true,
+    });
     state = flowReducer(state, { type: "CLAIM_SUBMITTED", transactionId: "13".repeat(32) });
     expect(state.stage).toBe("claim");
     expect(state.confirmed).toBe(false);

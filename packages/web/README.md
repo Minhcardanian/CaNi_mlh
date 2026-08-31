@@ -2,9 +2,11 @@
 
 The browser application presents the complete testnet flow in three stages: connect Midnight Preprod and Cardano Preview wallets, collect two private Midnight approvals, then retrieve and claim one relay-signed Cardano permit.
 
-The UI never accepts payout fields from the user. Its state machine advances only from confirmed runtime results, keeps wallet/network context visible, exposes a compact public evidence panel, and maps provider or protocol failures to deterministic messages without serializing raw provider objects.
+The UI never accepts payout fields from the user. Its state machine advances only from confirmed runtime results, keeps wallet/network context visible, exposes a compact public evidence panel, and maps provider or protocol failures to deterministic messages without serializing raw provider objects. Permit retrieval checks the canonical hash and Ed25519 signature against the deployment-fixed public key before showing the public nullifier, correlation ID, or verified status.
 
 The deployment uses public Vite configuration for the relay, deployed Midnight contract, proving-artifact base URL, Cardano validator and initialization reference, and Kupo/Ogmios endpoints. Remote HTTP and WebSocket providers require secure transport; plain transport is accepted only on localhost.
+
+The primary Kupo/Ogmios pair may be accompanied by one complete fallback pair. Provider selection is attempted only while creating the Preview client, before a transaction exists. A signing or submission failure is never replayed through the fallback. Remote fallback endpoints must use HTTPS and cannot contain embedded credentials.
 
 `deploy.html` is the operator-facing deployment ceremony. It connects Preprod and Preview wallets, validates a public policy, derives the validator binding from a wallet-controlled initialization output, deploys Midnight first, initializes Cardano second, and emits only public browser/relay configuration after both transactions confirm. Reviewer credentials stay in component memory and are cleared immediately after the Midnight wallet request.
 

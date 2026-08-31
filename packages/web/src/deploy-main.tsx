@@ -14,6 +14,8 @@ function loadRuntime(): Promise<DeploymentRuntime> {
     midnightArtifactBaseUrl: new URL(import.meta.env.VITE_MIDNIGHT_ARTIFACT_BASE_URL ?? "/", window.location.href),
     cardanoKupoUrl: import.meta.env.VITE_CARDANO_KUPO_URL ?? "http://127.0.0.1:1442",
     cardanoOgmiosUrl: import.meta.env.VITE_CARDANO_OGMIOS_URL ?? "http://127.0.0.1:1337",
+    cardanoFallbackKupoUrl: import.meta.env.VITE_CARDANO_FALLBACK_KUPO_URL,
+    cardanoFallbackOgmiosUrl: import.meta.env.VITE_CARDANO_FALLBACK_OGMIOS_URL,
     relayUrl: import.meta.env.VITE_RELAY_URL ?? "http://127.0.0.1:8787",
   }));
 }

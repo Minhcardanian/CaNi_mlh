@@ -1,15 +1,16 @@
 import type { WalletApi } from "@lucid-evolution/core-types";
 import type { ConnectedAPI } from "@midnight-ntwrk/dapp-connector-api";
 import { WebFlowError } from "./errors.js";
+import { cardanoProviderEndpoints, createPreviewLucid, type CardanoProviderEndpoints } from "./cardano-provider.js";
 import { secureProviderEndpoint } from "./provider-url.js";
 import { parseReviewerSecret } from "./reviewer-access.js";
 import type { ProductBridge, ReviewerAccess } from "./runtime.js";
 
 export type BrowserProductConfig = {
+  relayPublicKey: string;
   midnightContractId: string;
   midnightArtifactBaseUrl: URL;
-  cardanoKupoUrl: string;
-  cardanoOgmiosUrl: string;
+  cardanoProviders: CardanoProviderEndpoints[];
   cardanoValidatorCompiledCode: string;
   cardanoInitializationTxHash: string;
   cardanoInitializationOutputIndex: number;
@@ -45,12 +46,22 @@ export function productConfigFromEnvironment(
   pageUrl = window.location.href,
 ): BrowserProductConfig {
   return {
+    relayPublicKey: lowerHex(configured(environment.VITE_RELAY_PUBLIC_KEY), 32),
     midnightContractId: lowerHex(configured(environment.VITE_MIDNIGHT_CONTRACT_ID), 32),
     midnightArtifactBaseUrl: new URL(secureProviderEndpoint(new URL(
       configured(environment.VITE_MIDNIGHT_ARTIFACT_BASE_URL), pageUrl,
     ).href)),
-    cardanoKupoUrl: secureProviderEndpoint(configured(environment.VITE_CARDANO_KUPO_URL)),
-    cardanoOgmiosUrl: secureProviderEndpoint(configured(environment.VITE_CARDANO_OGMIOS_URL)),
+    cardanoProviders: cardanoProviderEndpoints({
+      kupoUrl: configured(environment.VITE_CARDANO_KUPO_URL),
+      ogmiosUrl: configured(environment.VITE_CARDANO_OGMIOS_URL),
+    }, {
+      kupoUrl: typeof environment.VITE_CARDANO_FALLBACK_KUPO_URL === "string"
+        ? environment.VITE_CARDANO_FALLBACK_KUPO_URL
+        : undefined,
+      ogmiosUrl: typeof environment.VITE_CARDANO_FALLBACK_OGMIOS_URL === "string"
+        ? environment.VITE_CARDANO_FALLBACK_OGMIOS_URL
+        : undefined,
+    }),
     cardanoValidatorCompiledCode: lowerHex(configured(environment.VITE_CARDANO_VALIDATOR_COMPILED_CODE)),
     cardanoInitializationTxHash: lowerHex(configured(environment.VITE_CARDANO_INITIALIZATION_TX_HASH), 32),
     cardanoInitializationOutputIndex: outputIndex(environment.VITE_CARDANO_INITIALIZATION_OUTPUT_INDEX),
@@ -73,10 +84,7 @@ export function createProductBridge(config: BrowserProductConfig): ProductBridge
       return api.approve();
     },
     async claim(wallet: WalletApi, permit) {
-      const [{ Kupmios, Lucid }, { parameterizeValidator, submitWalletClaim }] = await Promise.all([
-        import("@lucid-evolution/lucid"),
-        import("@nightpermit/cardano-client"),
-      ]);
+      const { parameterizeValidator, submitWalletClaim } = await import("@nightpermit/cardano-client");
       let validator;
       try {
         validator = parameterizeValidator(config.cardanoValidatorCompiledCode, {
@@ -86,9 +94,7 @@ export function createProductBridge(config: BrowserProductConfig): ProductBridge
       } catch (cause) {
         throw new WebFlowError("NP_WEB_RUNTIME_NOT_CONFIGURED", { cause });
       }
-      const provider = new Kupmios(config.cardanoKupoUrl, config.cardanoOgmiosUrl);
-      const lucid = await Lucid(provider, "Preview");
-      lucid.selectWallet.fromAPI(wallet);
+      const { lucid } = await createPreviewLucid(config.cardanoProviders, wallet);
       return submitWalletClaim(lucid, permit, validator);
     },
   };

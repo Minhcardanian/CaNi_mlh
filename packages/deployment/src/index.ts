@@ -33,6 +33,8 @@ export type PublicProviderEndpoints = {
   midnightArtifactBaseUrl: string;
   cardanoKupoUrl: string;
   cardanoOgmiosUrl: string;
+  cardanoFallbackKupoUrl?: string;
+  cardanoFallbackOgmiosUrl?: string;
 };
 
 export type PublicRelayEndpoints = {
@@ -144,10 +146,15 @@ export function browserEnvironment(
 ): Record<string, string> {
   return {
     VITE_RELAY_URL: endpoints.relayUrl,
+    VITE_RELAY_PUBLIC_KEY: deployment.inputs.relayPublicKey,
     VITE_MIDNIGHT_CONTRACT_ID: deployment.midnightContractId,
     VITE_MIDNIGHT_ARTIFACT_BASE_URL: endpoints.midnightArtifactBaseUrl,
     VITE_CARDANO_KUPO_URL: endpoints.cardanoKupoUrl,
     VITE_CARDANO_OGMIOS_URL: endpoints.cardanoOgmiosUrl,
+    ...(endpoints.cardanoFallbackKupoUrl && endpoints.cardanoFallbackOgmiosUrl ? {
+      VITE_CARDANO_FALLBACK_KUPO_URL: endpoints.cardanoFallbackKupoUrl,
+      VITE_CARDANO_FALLBACK_OGMIOS_URL: endpoints.cardanoFallbackOgmiosUrl,
+    } : {}),
     VITE_CARDANO_VALIDATOR_COMPILED_CODE: deployment.inputs.validatorCompiledCode,
     VITE_CARDANO_INITIALIZATION_TX_HASH: deployment.inputs.initializationRef.txHash,
     VITE_CARDANO_INITIALIZATION_OUTPUT_INDEX: deployment.inputs.initializationRef.outputIndex.toString(),

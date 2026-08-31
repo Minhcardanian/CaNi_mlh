@@ -17,9 +17,11 @@
     "check": "npm run check:node && npm run check:cardano",
     "check:cardano": "cd contracts/cardano && aiken fmt --check",
     "check:node": "npm run check --workspaces --if-present",
-    "test": "npm run test:node && npm run test:cardano",
+    "readiness": "node infra/check-readiness.mjs",
+    "test": "npm run test:node && npm run test:readiness && npm run test:cardano",
     "test:cardano": "cd contracts/cardano && aiken check -D",
-    "test:node": "npm run test --workspaces --if-present"
+    "test:node": "npm run test --workspaces --if-present",
+    "test:readiness": "node --test infra/check-readiness.test.mjs"
   },
   "devDependencies": {
     "@types/node": "24.10.0",

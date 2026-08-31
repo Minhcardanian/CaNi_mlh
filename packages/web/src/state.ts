@@ -24,6 +24,8 @@ export type FlowState = {
   midnightTxId?: string;
   permit?: PermitEnvelope;
   correlationId?: string;
+  nullifier?: string;
+  relayVerified: boolean;
   cardanoTxId?: string;
   confirmed: boolean;
   error?: FlowError | undefined;
@@ -33,6 +35,7 @@ export const initialFlowState: FlowState = {
   stage: "connect",
   approvalCount: 0,
   confirmed: false,
+  relayVerified: false,
 };
 
 export type FlowEvent =
@@ -40,7 +43,7 @@ export type FlowEvent =
   | { type: "MIDNIGHT_CONNECTED"; wallet: PublicWallet }
   | { type: "CARDANO_CONNECTED"; wallet: PublicWallet }
   | { type: "APPROVAL_CONFIRMED"; approvalCount: 1 | 2; authorized: boolean; transactionId: string }
-  | { type: "PERMIT_RECEIVED"; permit: PermitEnvelope; correlationId: string }
+  | { type: "PERMIT_RECEIVED"; permit: PermitEnvelope; correlationId: string; nullifier: string; relayVerified: true }
   | { type: "CLAIM_SUBMITTED"; transactionId: string }
   | { type: "CLAIM_CONFIRMED"; transactionId: string }
   | { type: "FAILED"; error: FlowError }
@@ -78,6 +81,8 @@ export function flowReducer(state: FlowState, event: FlowEvent): FlowState {
         ...state,
         permit: event.permit,
         correlationId: event.correlationId,
+        nullifier: event.nullifier,
+        relayVerified: event.relayVerified,
         operation: undefined,
         error: undefined,
       };
