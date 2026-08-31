@@ -1,10 +1,23 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import wasm from "vite-plugin-wasm";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), wasm()],
+  publicDir: "../midnight-contract/src/managed/nightpermit",
+  resolve: {
+    alias: [
+      { find: /^assert$/, replacement: "assert/" },
+      { find: /^events$/, replacement: "events/" },
+      {
+        find: /^isomorphic-ws$/,
+        replacement: fileURLToPath(new URL("./src/browser-websocket.ts", import.meta.url)),
+      },
+    ],
+  },
   build: {
-    target: "es2022",
+    target: "esnext",
     sourcemap: true,
   },
   server: {

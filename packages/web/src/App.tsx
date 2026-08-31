@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { toFlowError } from "./errors.js";
 import type { AppRuntime } from "./runtime.js";
 import { flowReducer, initialFlowState, type Operation } from "./state.js";
@@ -15,6 +15,8 @@ function Status({ ok, children }: { ok: boolean; children: React.ReactNode }) {
 export function App({ runtime }: { runtime: AppRuntime }) {
   const [state, dispatch] = useReducer(flowReducer, initialFlowState);
   const errorRef = useRef<HTMLDivElement>(null);
+  const [reviewerSecretHex, setReviewerSecretHex] = useState("");
+  const [privateStoragePassword, setPrivateStoragePassword] = useState("");
   const busy = state.operation !== undefined;
 
   useEffect(() => {
@@ -97,10 +99,35 @@ export function App({ runtime }: { runtime: AppRuntime }) {
             <>
               <p className="step-label">Stage 2</p><h2>Approve without publishing identity</h2>
               <p className="lead">The Compact circuit checks this reviewer locally. Public state records only threshold progress and a replay-safe nullifier.</p>
+              <div className="reviewer-access">
+                <label>Encrypted storage password <small>At least 16 characters and three character types</small><input
+                  type="password"
+                  autoComplete="off"
+                  minLength={16}
+                  value={privateStoragePassword}
+                  onChange={(event) => setPrivateStoragePassword(event.target.value)}
+                  required
+                /></label>
+                <label>Reviewer secret <small>64 lowercase hex characters; leave blank only after this reviewer was provisioned</small><input
+                  type="password"
+                  autoComplete="off"
+                  inputMode="text"
+                  value={reviewerSecretHex}
+                  onChange={(event) => setReviewerSecretHex(event.target.value)}
+                /></label>
+                <p>This DApp state is not recoverable from the wallet. Keep the secret and password in an approved recovery channel. A second reviewer must use a separately provisioned identity.</p>
+              </div>
               <div className="approval-count"><span>{state.approvalCount}</span><p><strong>of 2 approvals confirmed</strong><small>A different eligible reviewer must provide the second approval.</small></p></div>
-              <button className="primary" disabled={busy} onClick={() => void run("approve", async () => {
-                const result = await runtime.approve();
-                dispatch({ type: "APPROVAL_CONFIRMED", ...result });
+              <button className="primary" disabled={busy || privateStoragePassword.length === 0} onClick={() => void run("approve", async () => {
+                try {
+                  const result = await runtime.approve(reviewerSecretHex
+                    ? { privateStoragePassword, reviewerSecretHex }
+                    : { privateStoragePassword });
+                  dispatch({ type: "APPROVAL_CONFIRMED", ...result });
+                } finally {
+                  setReviewerSecretHex("");
+                  setPrivateStoragePassword("");
+                }
               })}>{busy ? "Waiting for Midnight…" : "Review and approve on Midnight"}</button>
             </>
           )}

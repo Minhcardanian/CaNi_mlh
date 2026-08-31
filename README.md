@@ -72,4 +72,4 @@ The shared `@nightpermit/permit` package owns the canonical binary codec and Ed2
 
 ## Project state
 
-The infrastructure baseline, versioned permit protocol, Cardano validator, Midnight authorization contract, attestation relay, Cardano transaction client, and browser flow are implemented and locally tested. The deployment-specific Midnight/Cardano provider bridge, testnet deployment, and live end-to-end proving remain in progress.
+The infrastructure baseline, versioned permit protocol, Cardano validator, Midnight authorization contract and client, attestation relay, Cardano transaction client, browser flow, and deployment provider bridge are implemented and locally tested. Testnet deployment and live end-to-end proving remain in progress.

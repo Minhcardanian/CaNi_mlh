@@ -6,7 +6,6 @@ afterEach(() => {
   vi.restoreAllMocks();
   delete window.midnight;
   window.cardano = {} as never;
-  delete window.nightPermitBridge;
 });
 
 describe("browser runtime", () => {
@@ -24,8 +23,10 @@ describe("browser runtime", () => {
       lace: {
         apiVersion: "4.0.1",
         name: "Lace",
-        connect: vi.fn(async () => ({ getConnectionStatus: async () => ({ status: "connected" }) })),
-      },
+        connect: vi.fn(async () => ({
+          getConnectionStatus: async () => ({ status: "connected", networkId: "preprod" }),
+        })),
+      } as never,
     };
     const address = "addr_test1vq6rgdp5xs6rgdp5xs6rgdp5xs6rgdp5xs6rgdp5xs6rgdq6smfkn";
     const addressHex = `60${"34".repeat(28)}`;
@@ -97,5 +98,29 @@ describe("browser runtime", () => {
       correlationId: "correlation-01",
       permit,
     });
+  });
+
+  it("keeps the product bridge in the runtime closure instead of a mutable window global", async () => {
+    const approve = vi.fn(async () => ({
+      transactionId: "20".repeat(32),
+      approvalCount: 1 as const,
+      authorized: false,
+    }));
+    const runtime = createBrowserRuntime(new URL("http://127.0.0.1:8787"), {
+      approve,
+      claim: vi.fn(),
+    });
+    window.midnight = {
+      lace: {
+        apiVersion: "4.0.1",
+        connect: async () => ({
+          getConnectionStatus: async () => ({ status: "connected", networkId: "preprod" }),
+        }),
+      } as never,
+    };
+    await runtime.connectMidnight();
+    await expect(runtime.approve({ privateStoragePassword: "local-only" })).resolves.toMatchObject({ approvalCount: 1 });
+    expect(approve).toHaveBeenCalledOnce();
+    expect("nightPermitBridge" in window).toBe(false);
   });
 });

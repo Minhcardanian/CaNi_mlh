@@ -1,18 +1,10 @@
 import type { WalletApi } from "@lucid-evolution/core-types";
+import type { ConnectedAPI, InitialAPI } from "@midnight-ntwrk/dapp-connector-api";
 import { bech32 } from "@scure/base";
+import semver from "semver";
 import type { PermitEnvelope } from "@nightpermit/cardano-client";
 import { WebFlowError } from "./errors.js";
 import type { PublicWallet } from "./state.js";
-
-type MidnightConnectedApi = {
-  getConnectionStatus(): Promise<{ status: string }>;
-};
-
-type MidnightInitialApi = {
-  apiVersion: string;
-  connect(networkId: "preprod"): Promise<MidnightConnectedApi>;
-  name?: string;
-};
 
 type CardanoConnector = {
   name?: string;
@@ -30,25 +22,23 @@ export type ClaimResult = {
   awaitConfirmation(): Promise<void>;
 };
 
+export type ReviewerAccess = {
+  privateStoragePassword: string;
+  reviewerSecretHex?: string;
+};
+
 export type ProductBridge = {
-  approve(connectedWallet: MidnightConnectedApi): Promise<ApprovalResult>;
+  approve(connectedWallet: ConnectedAPI, access: ReviewerAccess): Promise<ApprovalResult>;
   claim(wallet: WalletApi, permit: PermitEnvelope): Promise<ClaimResult>;
 };
 
 export type AppRuntime = {
   connectMidnight(): Promise<PublicWallet>;
   connectCardano(walletId?: string): Promise<PublicWallet>;
-  approve(): Promise<ApprovalResult>;
+  approve(access: ReviewerAccess): Promise<ApprovalResult>;
   getPermit(midnightTxId: string): Promise<{ permit: PermitEnvelope; correlationId: string }>;
   claim(permit: PermitEnvelope): Promise<ClaimResult>;
 };
-
-declare global {
-  interface Window {
-    midnight?: Record<string, MidnightInitialApi | undefined>;
-    nightPermitBridge?: ProductBridge;
-  }
-}
 
 function isLocalhost(hostname: string): boolean {
   return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "[::1]";
@@ -114,20 +104,21 @@ async function fetchJson(url: URL): Promise<unknown> {
   }
 }
 
-export function createBrowserRuntime(baseUrl: URL): AppRuntime {
-  let midnightWallet: MidnightConnectedApi | undefined;
+export function createBrowserRuntime(baseUrl: URL, bridge?: ProductBridge): AppRuntime {
+  let midnightWallet: ConnectedAPI | undefined;
   let cardanoWallet: WalletApi | undefined;
   return {
     async connectMidnight() {
       const connector = Object.values(window.midnight ?? {}).find(
-        (candidate): candidate is MidnightInitialApi =>
-          Boolean(candidate && /^4\./.test(candidate.apiVersion)),
+        (candidate): candidate is InitialAPI =>
+          Boolean(candidate && semver.satisfies(candidate.apiVersion, "4.x")),
       );
       if (!connector) throw new WebFlowError("NP_WEB_MIDNIGHT_WALLET_MISSING");
       try {
         midnightWallet = await connector.connect("preprod");
         const status = await midnightWallet.getConnectionStatus();
         if (status.status !== "connected") throw new WebFlowError("NP_WEB_WALLET_REJECTED");
+        if (status.networkId !== "preprod") throw new WebFlowError("NP_WEB_WRONG_MIDNIGHT_NETWORK");
         return { name: connector.name ?? "Midnight Lace", network: "Midnight Preprod" };
       } catch (error) {
         if (error instanceof WebFlowError) throw error;
@@ -156,21 +147,21 @@ export function createBrowserRuntime(baseUrl: URL): AppRuntime {
         throw new WebFlowError("NP_WEB_WALLET_REJECTED", { cause: error });
       }
     },
-    async approve() {
-      if (!midnightWallet || !window.nightPermitBridge) {
+    async approve(access) {
+      if (!midnightWallet || !bridge) {
         throw new WebFlowError("NP_WEB_RUNTIME_NOT_CONFIGURED");
       }
-      return window.nightPermitBridge.approve(midnightWallet);
+      return bridge.approve(midnightWallet, access);
     },
     async getPermit(midnightTxId) {
       if (!/^[0-9a-f]{64}$/.test(midnightTxId)) throw new WebFlowError("NP_WEB_UNEXPECTED");
       return parsePermitResponse(await fetchJson(new URL(`/v1/permits/${midnightTxId}`, baseUrl)));
     },
     async claim(permit) {
-      if (!cardanoWallet || !window.nightPermitBridge) {
+      if (!cardanoWallet || !bridge) {
         throw new WebFlowError("NP_WEB_RUNTIME_NOT_CONFIGURED");
       }
-      return window.nightPermitBridge.claim(cardanoWallet, permit);
+      return bridge.claim(cardanoWallet, permit);
     },
   };
 }

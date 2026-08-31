@@ -41,6 +41,8 @@ describe("NightPermit application", () => {
     fireEvent.click(screen.getByRole("button", { name: "Connect Cardano" }));
     await screen.findByRole("heading", { name: "Approve without publishing identity" });
 
+    fireEvent.change(screen.getByLabelText(/Encrypted storage password/), { target: { value: "Correct-Horse-2026" } });
+    fireEvent.change(screen.getByLabelText(/Reviewer secret/), { target: { value: "10".repeat(32) } });
     fireEvent.click(screen.getByRole("button", { name: "Review and approve on Midnight" }));
     await screen.findByRole("heading", { name: "Claim the exact tranche" });
     expect(screen.getByText("2 / 2")).toBeTruthy();
@@ -51,6 +53,10 @@ describe("NightPermit application", () => {
     await screen.findByRole("heading", { name: "Milestone paid once" });
     await waitFor(() => expect(screen.getAllByText("Confirmed").length).toBeGreaterThan(0));
     expect(runtime.claim).toHaveBeenCalledWith(permit);
+    expect(runtime.approve).toHaveBeenCalledWith({
+      privateStoragePassword: "Correct-Horse-2026",
+      reviewerSecretHex: "10".repeat(32),
+    });
   });
 
   it("shows a deterministic safe error without advancing", async () => {

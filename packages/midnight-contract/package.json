@@ -11,12 +11,13 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && cp -R src/managed dist/managed && cp src/nightpermit.compact dist/nightpermit.compact",
+    "build": "tsc -p tsconfig.build.json && mkdir -p dist/managed && cp -R src/managed/. dist/managed/ && cp src/nightpermit.compact dist/nightpermit.compact",
     "check": "tsc -p tsconfig.json --noEmit",
     "compile": "compact compile src/nightpermit.compact src/managed/nightpermit",
     "test": "vitest run"
   },
   "dependencies": {
-    "@midnight-ntwrk/compact-runtime": "0.16.0"
+    "@midnight-ntwrk/compact-runtime": "0.16.0",
+    "@midnight-ntwrk/midnight-js-protocol": "4.1.1"
   }
 }

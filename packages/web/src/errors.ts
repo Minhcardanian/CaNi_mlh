@@ -13,6 +13,10 @@ const messages: Record<string, Omit<FlowError, "code">> = {
     message: "Switch the Cardano wallet to Preview before continuing.",
     retryable: true,
   },
+  NP_WEB_WRONG_MIDNIGHT_NETWORK: {
+    message: "Switch the Midnight wallet to Preprod before continuing.",
+    retryable: true,
+  },
   NP_WEB_WALLET_REJECTED: {
     message: "The wallet request was declined. No transaction was submitted.",
     retryable: true,
@@ -20,6 +24,14 @@ const messages: Record<string, Omit<FlowError, "code">> = {
   NP_WEB_RUNTIME_NOT_CONFIGURED: {
     message: "This deployment is missing its public contract runtime configuration.",
     retryable: false,
+  },
+  NP_WEB_BAD_STORAGE_PASSWORD: {
+    message: "Use an encrypted-storage password of at least 16 characters with three character types and no simple sequences.",
+    retryable: true,
+  },
+  NP_WEB_BAD_REVIEWER_SECRET: {
+    message: "The reviewer secret must contain exactly 32 bytes as lowercase hexadecimal.",
+    retryable: true,
   },
   NP_RELAY_PROVIDER_TIMEOUT: {
     message: "Authorization is still pending or the Midnight provider timed out. Try again safely.",

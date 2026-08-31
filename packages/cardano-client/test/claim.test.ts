@@ -1,6 +1,11 @@
-import { credentialToAddress, Data } from "@lucid-evolution/lucid";
+import { Constr, credentialToAddress, Data } from "@lucid-evolution/lucid";
 import { describe, expect, it } from "vitest";
-import { CardanoClientError, createClaimPlan, encodeValidatorState } from "../src/index.js";
+import {
+  CardanoClientError,
+  createClaimPlan,
+  decodeValidatorState,
+  encodeValidatorState,
+} from "../src/index.js";
 import { assetName, assetPolicyId, beneficiaryPkh, currentSlot, fixture } from "./fixtures.js";
 
 async function expectCode(
@@ -83,5 +88,21 @@ describe("claim planning", () => {
     const input = await fixture();
     const plan = await createClaimPlan(input);
     expect(plan.beneficiaryPkh).toBe(beneficiaryPkh);
+  });
+
+  it("round trips the live inline validator datum strictly", async () => {
+    const input = await fixture();
+    expect(decodeValidatorState(encodeValidatorState(input.state))).toEqual(input.state);
+    const invalidVersion = Data.to(new Constr(0, [
+      2n,
+      input.state.stateThreadPolicyId,
+      input.state.stateThreadAssetName,
+      new Constr(0, []),
+      [],
+      0n,
+    ]));
+    expect(() => decodeValidatorState(invalidVersion)).toThrowError(expect.objectContaining({
+      code: "NP_CARDANO_BAD_STATE",
+    }));
   });
 });

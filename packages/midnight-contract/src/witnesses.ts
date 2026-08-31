@@ -5,6 +5,8 @@ export type NightPermitPrivateState = {
   readonly reviewerSecret: Uint8Array;
 };
 
+export const nightPermitPrivateStateKey = "nightPermitReviewerV1" as const;
+
 export function createPrivateState(reviewerSecret: Uint8Array): NightPermitPrivateState {
   if (reviewerSecret.length !== 32) {
     throw new Error("reviewer secret must contain exactly 32 bytes");

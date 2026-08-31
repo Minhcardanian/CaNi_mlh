@@ -47,6 +47,12 @@ h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
 .wallet-row strong { font-size: 14px; }
 .primary { min-width: 250px; border-color: #63d5ba; background: #63d5ba; color: #06201b; }
 .primary:hover:not(:disabled) { background: #85e4cc; border-color: #85e4cc; }
+.reviewer-access { display: grid; gap: 13px; margin: 0 0 20px; padding: 18px; border: 1px solid #31544d; border-radius: 8px; background: #0e2925; }
+.reviewer-access label { display: grid; gap: 7px; color: #d9e9e5; font-size: 13px; font-weight: 700; }
+.reviewer-access label small { color: #8ca8a1; font-weight: 400; line-height: 1.4; }
+.reviewer-access input { width: 100%; border: 1px solid #41655e; border-radius: 6px; background: #071a18; color: #f4fbf9; padding: 10px 11px; font: 14px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.reviewer-access input:focus-visible { outline: 3px solid #f2c14e; outline-offset: 2px; }
+.reviewer-access > p { margin: 0; color: #8ca8a1; font-size: 12px; line-height: 1.5; }
 .approval-count { display: flex; align-items: center; gap: 17px; margin: 25px 0; padding: 18px; border: 1px solid #31544d; border-radius: 8px; background: #0e2925; }
 .approval-count > span { font: 500 44px/1 Georgia, serif; color: #8defd6; }
 .approval-count p { display: grid; gap: 5px; margin: 0; }

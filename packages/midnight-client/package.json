@@ -1,0 +1,27 @@
+{
+  "name": "@nightpermit/midnight-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "npm run build:dependencies && tsc -p tsconfig.build.json",
+    "build:dependencies": "npm run build --workspace=@nightpermit/midnight-contract",
+    "check": "npm run build:dependencies && tsc -p tsconfig.json --noEmit",
+    "test": "npm run build:dependencies && vitest run"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
+    "@midnight-ntwrk/midnight-js-protocol": "4.1.1",
+    "@midnight-ntwrk/midnight-js-types": "4.1.1",
+    "@midnight-ntwrk/midnight-js-utils": "4.1.1",
+    "@nightpermit/midnight-contract": "0.1.0",
+    "rxjs": "7.8.2"
+  }
+}
