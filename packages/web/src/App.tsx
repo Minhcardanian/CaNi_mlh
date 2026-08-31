@@ -3,6 +3,29 @@ import { toFlowError } from "./errors.js";
 import type { AppRuntime } from "./runtime.js";
 import { flowReducer, initialFlowState, type Operation } from "./state.js";
 
+const operationStatus: Record<Operation, { title: string; boundary: string }> = {
+  "connect-midnight": {
+    title: "Waiting for Midnight wallet",
+    boundary: "Wallet-controlled prompt; NightPermit does not retry it automatically.",
+  },
+  "connect-cardano": {
+    title: "Waiting for Cardano wallet",
+    boundary: "Wallet-controlled prompt; NightPermit does not retry it automatically.",
+  },
+  approve: {
+    title: "Submitting private Midnight approval",
+    boundary: "30-second public-state deadline; a timeout returns a retry-safe failure.",
+  },
+  permit: {
+    title: "Verifying the relay permit",
+    boundary: "5-second request deadline; no Cardano transaction is submitted.",
+  },
+  claim: {
+    title: "Submitting the Cardano claim",
+    boundary: "One wallet signature and one submission; confirmation is tracked separately.",
+  },
+};
+
 function short(value: string | undefined): string {
   if (!value) return "Not available";
   return value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value;
@@ -17,13 +40,25 @@ export function App({ runtime }: { runtime: AppRuntime }) {
   const errorRef = useRef<HTMLDivElement>(null);
   const [reviewerSecretHex, setReviewerSecretHex] = useState("");
   const [privateStoragePassword, setPrivateStoragePassword] = useState("");
+  const [operationStartedAt, setOperationStartedAt] = useState(0);
+  const [operationElapsedMs, setOperationElapsedMs] = useState(0);
   const busy = state.operation !== undefined;
 
   useEffect(() => {
     if (state.error) errorRef.current?.focus();
   }, [state.error]);
 
+  useEffect(() => {
+    if (!state.operation || operationStartedAt === 0) return;
+    const updateElapsed = () => setOperationElapsedMs(Math.max(0, Date.now() - operationStartedAt));
+    updateElapsed();
+    const timer = window.setInterval(updateElapsed, 250);
+    return () => window.clearInterval(timer);
+  }, [operationStartedAt, state.operation]);
+
   const run = async (operation: Operation, action: () => Promise<void>) => {
+    setOperationStartedAt(Date.now());
+    setOperationElapsedMs(0);
     dispatch({ type: "START", operation });
     try {
       await action();
@@ -57,8 +92,19 @@ export function App({ runtime }: { runtime: AppRuntime }) {
 
       {state.error && (
         <div className="error" role="alert" tabIndex={-1} ref={errorRef}>
-          <div><strong>{state.error.code}</strong><p>{state.error.message}</p></div>
+          <div><strong>{state.error.code}</strong><p>{state.error.message}</p><small>
+            {state.error.retryable
+              ? "No completion was recorded. You can safely retry this step."
+              : "Review the wallet, deployment, or public configuration before trying again."}
+          </small></div>
           <button type="button" onClick={() => dispatch({ type: "CLEAR_ERROR" })}>Dismiss</button>
+        </div>
+      )}
+
+      {state.operation && (
+        <div className="operation-status" role="status" aria-live="polite">
+          <div><strong>{operationStatus[state.operation].title}</strong><small>{operationStatus[state.operation].boundary}</small></div>
+          <span>{(operationElapsedMs / 1_000).toFixed(1)}s elapsed</span>
         </div>
       )}
 

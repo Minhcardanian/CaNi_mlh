@@ -6,6 +6,8 @@ The only permit request field is `midnightTxId`. The relay resolves that contrac
 
 The relay reads its Ed25519 seed from a mode-`0600` file and refuses to start unless that seed derives the separately configured public key fixed in Cardano state. It binds permit validity to the current Cardano slot returned by Ogmios, applies bounded timeouts/retries, coalesces concurrent requests, and stores issued public envelopes atomically so restarts return identical bytes. The stored state contains no signing seed or private reviewer input.
 
+The hackathon MVP accepts exactly one policy record. That record fixes one escrow, milestone, nonzero tranche, beneficiary, action, asset, and Cardano validator; empty or multi-policy configurations fail before the server starts.
+
 The MVP has one relay key. Rotation is a coordinated deployment change: create a new key ID, update the Cardano state/validator configuration through an explicitly authorized transition or new deployment, then switch the relay policy. Existing permits remain bound to their original key ID; changing a key file alone must never silently change the accepted Cardano authority.
 
 ## API

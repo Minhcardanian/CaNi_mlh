@@ -5,7 +5,7 @@ The Drive tracker is the authoritative status record. This source map identifies
 | Requirement | Primary verification location |
 | --- | --- |
 | FR-001, FR-002 | `packages/web/test/runtime.test.ts`, `packages/web/test/DeployApp.test.tsx` |
-| FR-003, FR-004, FR-005, FR-006 | `packages/midnight-contract/src/test/nightpermit.test.ts`, `packages/midnight-client/test/policy.test.ts` |
+| FR-003, FR-004, FR-005, FR-006 | `packages/midnight-contract/src/test/nightpermit.test.ts`, `packages/midnight-client/test/policy.test.ts`, `packages/relay/test/config.test.ts` |
 | FR-007, FR-008 | `packages/midnight-client/test/api.test.ts`, `packages/relay/test/service.test.ts` |
 | FR-009, FR-010 | `packages/permit/test/crypto.test.ts`, `contracts/cardano/lib/nightpermit/permit_v1.test.ak` |
 | FR-011, FR-012, FR-013, FR-014 | `packages/cardano-client/test/claim.test.ts`, `contracts/cardano/validators/nightpermit.test.ak` |
@@ -19,14 +19,14 @@ The Drive tracker is the authoritative status record. This source map identifies
 | SR-007 | `packages/relay/test/config.test.ts`, `packages/cardano-client/test/claim.test.ts`, `contracts/cardano/validators/nightpermit.test.ak` |
 | SR-008, SR-009 | `packages/cardano-client/test/initialize.test.ts`, `contracts/cardano/validators/nightpermit.test.ak` |
 | SR-010, SR-011 | `packages/relay/test/service.test.ts`, `packages/relay/test/server.test.ts` |
-| OR-001 | `infra/check-readiness.test.mjs`, live readiness reports recorded in the Drive tracker |
+| OR-001 | `infra/check-readiness.test.mjs`, bounded live readiness/recovery reports recorded in the Drive tracker |
 | OR-002 | `packages/relay/test/store.test.ts`, `packages/cardano-client/test/claim.test.ts` |
 | OR-003 | `packages/relay/test/config.test.ts`, `packages/relay/test/ogmios.test.ts`, `infra/check-readiness.test.mjs` |
 | OR-004 | `packages/web/test/App.test.tsx`, `packages/web/test/DeployApp.test.tsx` |
 | OR-005 | `packages/relay/test/server.test.ts`, live E2E correlation record in the Drive tracker |
 | OR-008 | Product CI plus the exact-SHA clean-clone evidence in the Drive tracker |
 | UX-001, UX-002, UX-003, UX-004, UX-005, UX-006 | `packages/web/test/App.test.tsx`, `packages/web/src/App.tsx`, live browser review in the Drive tracker |
-| PF-002 | `packages/web/test/state.test.ts`, `packages/relay/test/ogmios.test.ts`, live timing evidence in the Drive tracker |
+| PF-002 | `packages/web/test/App.test.tsx`, `packages/web/test/state.test.ts`, `packages/relay/test/ogmios.test.ts`, `infra/check-readiness.test.mjs`, live timing evidence in the Drive tracker |
 | PF-004 | Demo checklist and truthful staged/live evidence in the Drive tracker |
 | HC-001 through HC-010 | External registration, repository, submission, and video evidence owned in validation gate G00 |
 | DR-001 through DR-007 | `README.md`, `docs/architecture.md`, `docs/security/threat-model.md`, component READMEs, and this map |

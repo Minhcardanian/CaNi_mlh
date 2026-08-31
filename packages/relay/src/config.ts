@@ -163,8 +163,8 @@ async function readPolicies(path: string): Promise<ReadonlyMap<Hex, EntitlementP
       }
       policies.set(policy.policyId, policy);
     }
-    if (policies.size === 0) {
-      configurationError("RELAY_POLICY_FILE must configure at least one policy");
+    if (policies.size !== 1) {
+      configurationError("RELAY_POLICY_FILE must configure exactly one MVP policy");
     }
     return policies;
   } catch (error) {

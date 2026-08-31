@@ -35,7 +35,7 @@ describe("Midnight deployment policy", () => {
     expect(toHex(args[8])).toBe(value.cardanoValidatorHash);
   });
 
-  it("rejects duplicate reviewers and out-of-range tranche amounts", () => {
+  it("rejects duplicate reviewers and zero or overflowing tranche amounts", () => {
     const duplicate = policy();
     duplicate.reviewerTwoPublicKey = duplicate.reviewerOnePublicKey;
     expect(() => deploymentArguments(duplicate)).toThrowError(expect.objectContaining({
@@ -44,6 +44,11 @@ describe("Midnight deployment policy", () => {
     const overflow = policy();
     overflow.amount = 18_446_744_073_709_551_616n;
     expect(() => deploymentArguments(overflow)).toThrowError(expect.objectContaining({
+      code: "NP_MIDNIGHT_BAD_POLICY",
+    }));
+    const zero = policy();
+    zero.amount = 0n;
+    expect(() => deploymentArguments(zero)).toThrowError(expect.objectContaining({
       code: "NP_MIDNIGHT_BAD_POLICY",
     }));
   });

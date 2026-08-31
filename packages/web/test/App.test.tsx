@@ -1,10 +1,13 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "../src/App.js";
 import type { AppRuntime } from "../src/runtime.js";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 describe("NightPermit application", () => {
   it("renders the product flow and advances only from runtime confirmations", async () => {
@@ -72,6 +75,23 @@ describe("NightPermit application", () => {
     render(<App runtime={runtime} />);
     fireEvent.click(screen.getByRole("button", { name: "Connect Midnight" }));
     expect((await screen.findByRole("alert")).textContent).toContain("Install or enable a compatible Midnight Lace wallet");
+    expect(screen.getByRole("alert").textContent).toContain("safely retry");
     expect(screen.getByRole("heading", { name: "Connect the two sides" })).toBeTruthy();
+  });
+
+  it("shows elapsed time and the no-retry boundary while an operation is active", async () => {
+    vi.useFakeTimers();
+    let resolveConnection!: (wallet: { name: string; network: "Midnight Preprod" }) => void;
+    const runtime = {
+      connectMidnight: vi.fn(() => new Promise((resolve) => { resolveConnection = resolve; })),
+    } as unknown as AppRuntime;
+    render(<App runtime={runtime} />);
+    fireEvent.click(screen.getByRole("button", { name: "Connect Midnight" }));
+    expect(screen.getByRole("status").textContent).toContain("NightPermit does not retry it automatically");
+    expect(screen.getByRole("status").textContent).toContain("0.0s elapsed");
+    await act(async () => { vi.advanceTimersByTime(1_250); });
+    expect(screen.getByRole("status").textContent).toContain("1.3s elapsed");
+    await act(async () => { resolveConnection({ name: "Lace", network: "Midnight Preprod" }); });
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });

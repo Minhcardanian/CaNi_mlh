@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { checkReadiness, readinessConfiguration } from "./check-readiness.mjs";
+import { checkReadiness, readinessConfiguration, waitForReadiness } from "./check-readiness.mjs";
 
 const response = (body, status = 200) => new Response(
   typeof body === "string" ? body : JSON.stringify(body),
@@ -57,5 +57,42 @@ describe("NightPermit readiness verifier", () => {
     const config = readinessConfiguration({ READINESS_TIMEOUT_MS: "50" }, "providers");
     const report = await checkReadiness(config, healthyFetch, () => 30);
     assert.equal(report.status, "fail");
+  });
+
+  it("waits through a provider outage and reports bounded recovery evidence", async () => {
+    let clock = 0;
+    let ogmiosAttempts = 0;
+    const report = await waitForReadiness(readinessConfiguration({}, "providers"), {
+      waitMs: 3_000,
+      intervalMs: 1_000,
+      now: () => clock,
+      sleep: async (milliseconds) => { clock += milliseconds; },
+      fetchImpl: async (endpoint, init) => {
+        if (endpoint.toString().includes("1337") && ++ogmiosAttempts < 3) {
+          return response({ unavailable: true }, 503);
+        }
+        return healthyFetch(endpoint, init);
+      },
+    });
+    assert.equal(report.status, "pass");
+    assert.equal(report.attempts, 3);
+    assert.equal(report.recoveryElapsedMs, 2_000);
+    assert.doesNotMatch(JSON.stringify(report), /unavailable/);
+  });
+
+  it("stops failed recovery checks at the configured deadline", async () => {
+    let clock = 0;
+    const report = await waitForReadiness(readinessConfiguration({}, "providers"), {
+      waitMs: 1_000,
+      intervalMs: 500,
+      now: () => clock,
+      sleep: async (milliseconds) => { clock += milliseconds; },
+      fetchImpl: async () => response({ privateProviderDetail: "must-not-escape" }, 503),
+    });
+    assert.equal(report.status, "fail");
+    assert.equal(report.attempts, 3);
+    assert.equal(report.recoveryElapsedMs, 1_000);
+    assert.doesNotMatch(JSON.stringify(report), /must-not-escape/);
+    await assert.rejects(() => waitForReadiness(readinessConfiguration({}, "providers"), { waitMs: 99 }));
   });
 });

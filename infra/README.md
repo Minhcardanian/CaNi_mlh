@@ -25,4 +25,12 @@ This verifies the proof server, Midnight Preprod RPC and indexer, Kupo, Ogmios, 
 npm run readiness
 ```
 
+Use bounded polling when measuring startup or recovery. The command exits successfully only when the complete selected scope is ready before the deadline and reports the attempt count plus recovery time:
+
+```bash
+npm run readiness -- --providers --wait-ms=30000 --interval-ms=1000
+```
+
+Wait deadlines are limited to 120 seconds and polling intervals to 50-5000 milliseconds. Each individual request retains its own bounded timeout, and failed provider payloads are never included in the report.
+
 The browser accepts an optional second Kupo/Ogmios pair through `VITE_CARDANO_FALLBACK_KUPO_URL` and `VITE_CARDANO_FALLBACK_OGMIOS_URL`. Both values are required together. A remote pair must use HTTPS, expose no embedded credential, and implement the same Preview Kupmios interfaces. Failover happens only before wallet transaction construction; NightPermit never automatically retries a signature or submission against another provider.

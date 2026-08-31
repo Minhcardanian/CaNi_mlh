@@ -125,9 +125,48 @@ export async function checkReadiness(config, fetchImpl = fetch, now = () => Date
   return { scope: config.scope, status: results.every(({ status }) => status === "pass") ? "pass" : "fail", results };
 }
 
+export async function waitForReadiness(config, options = {}) {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const now = options.now ?? (() => Date.now());
+  const sleep = options.sleep ?? ((milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds)));
+  const waitMs = options.waitMs ?? 30_000;
+  const intervalMs = options.intervalMs ?? 1_000;
+  if (!Number.isInteger(waitMs) || waitMs < 100 || waitMs > 120_000) {
+    throw new Error("readiness wait must be between 100 and 120000 ms");
+  }
+  if (!Number.isInteger(intervalMs) || intervalMs < 50 || intervalMs > 5_000 || intervalMs > waitMs) {
+    throw new Error("readiness interval must be between 50 and 5000 ms and not exceed the wait");
+  }
+
+  const started = now();
+  let attempts = 0;
+  while (true) {
+    attempts += 1;
+    const report = await checkReadiness(config, fetchImpl, now);
+    const recoveryElapsedMs = Math.max(0, now() - started);
+    if (report.status === "pass" || recoveryElapsedMs >= waitMs) {
+      return { ...report, attempts, recoveryElapsedMs };
+    }
+    await sleep(Math.min(intervalMs, waitMs - recoveryElapsedMs));
+  }
+}
+
+function integerOption(prefix) {
+  const argument = process.argv.find((value) => value.startsWith(prefix));
+  if (!argument) return undefined;
+  const value = Number(argument.slice(prefix.length));
+  if (!Number.isInteger(value)) throw new Error(`${prefix.slice(2, -1)} must be an integer`);
+  return value;
+}
+
 async function main() {
   const scope = process.argv.includes("--providers") ? "providers" : "full";
-  const report = await checkReadiness(readinessConfiguration(process.env, scope));
+  const waitMs = integerOption("--wait-ms=");
+  const intervalMs = integerOption("--interval-ms=");
+  const config = readinessConfiguration(process.env, scope);
+  const report = waitMs === undefined
+    ? await checkReadiness(config)
+    : await waitForReadiness(config, { waitMs, ...(intervalMs === undefined ? {} : { intervalMs }) });
   process.stdout.write(`${JSON.stringify(report)}\n`);
   if (report.status !== "pass") process.exitCode = 1;
 }

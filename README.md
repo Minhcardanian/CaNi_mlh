@@ -85,6 +85,12 @@ docker compose --env-file .env -f infra/compose.cardano-providers.yaml up -d
 npm run readiness -- --providers
 ```
 
+For a bounded startup or restart gate, let the verifier poll until every selected dependency recovers or the deadline expires:
+
+```bash
+npm run readiness -- --providers --wait-ms=30000 --interval-ms=1000
+```
+
 After a wallet-backed deployment has produced public configuration, build and start the relay and browser:
 
 ```bash
@@ -96,6 +102,8 @@ npm run dev --workspace=@nightpermit/web
 The beneficiary flow is at `/`. The operator-only deployment ceremony is at `/deploy.html`; it deploys Midnight first, initializes Cardano second, and emits public runtime configuration only after both confirmations. The full `npm run readiness` check includes the running relay.
 
 One optional fallback Kupo/Ogmios pair can be configured for the browser. It must be a complete Preview-compatible pair and remote URLs must use HTTPS. Failover is limited to provider initialization; NightPermit never retries a wallet signature or transaction submission automatically.
+
+While an operation is active, the product displays its purpose, elapsed time, timeout boundary, and retry behavior. Wallet prompts and chain submissions remain single-shot; a failure cannot create a false completion state.
 
 ## Demo flow
 

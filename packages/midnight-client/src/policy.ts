@@ -18,8 +18,8 @@ export function deploymentArguments(policy: DeploymentPolicy): [
   Uint8Array, Uint8Array, Uint8Array, Uint8Array, Uint8Array, Uint8Array,
   Uint8Array, bigint, Uint8Array, Uint8Array, Uint8Array,
 ] {
-  if (policy.amount < 0n || policy.amount > 18_446_744_073_709_551_615n) {
-    throw new MidnightClientError("NP_MIDNIGHT_BAD_POLICY", "amount must fit an unsigned 64-bit integer");
+  if (policy.amount < 1n || policy.amount > 18_446_744_073_709_551_615n) {
+    throw new MidnightClientError("NP_MIDNIGHT_BAD_POLICY", "amount must be a nonzero unsigned 64-bit integer");
   }
   const reviewerOne = bytes(policy.reviewerOnePublicKey, 32, "reviewer one public key");
   const reviewerTwo = bytes(policy.reviewerTwoPublicKey, 32, "reviewer two public key");

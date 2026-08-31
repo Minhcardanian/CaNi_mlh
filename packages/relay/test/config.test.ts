@@ -75,6 +75,20 @@ describe("relay configuration", () => {
   });
 
   it.each([
+    ["no policies", []],
+    ["more than one policy", [
+      { ...policy, amount: policy.amount.toString() },
+      { ...policy, policyId: "ff".repeat(32), amount: policy.amount.toString() },
+    ]],
+  ])("rejects %s for the single-policy MVP", async (_name, policies) => {
+    const paths = await files();
+    await writeFile(paths.policy, JSON.stringify({ version: 1, policies }));
+    await expect(loadConfig(environment(paths))).rejects.toMatchObject({
+      code: "NP_RELAY_CONFIGURATION_INVALID",
+    });
+  });
+
+  it.each([
     ["public bind", { RELAY_HOST: "0.0.0.0" }],
     ["wrong network", { MIDNIGHT_NETWORK: "preview" }],
     ["unsafe indexer", { MIDNIGHT_INDEXER_URL: "http://indexer.invalid/graphql" }],
