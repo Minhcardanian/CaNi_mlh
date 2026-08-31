@@ -57,6 +57,19 @@ Private reviewer witnesses remain on the Midnight side. Public logs and UI state
 - TypeScript web and relay services
 - Dockerized local proof service
 
+## Development
+
+Node `24.11.1` is the pinned JavaScript runtime. From the repository root:
+
+```bash
+npm ci
+npm run check
+npm test
+npm run build
+```
+
+The first implemented component is `@nightpermit/permit`, the shared canonical binary codec and Ed25519 envelope used by the relay and Cardano validator. Its binary layout and trust boundary are documented in [docs/protocol/permit-v1.md](docs/protocol/permit-v1.md).
+
 ## Project state
 
-The repository is currently establishing its reproducible toolchain and infrastructure baseline before reusable protocol and application code is added.
+The infrastructure baseline and versioned permit protocol are implemented. Midnight contract, relay, Cardano validator, and web application work remain in progress.
