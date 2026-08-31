@@ -1,0 +1,23 @@
+{
+  "name": "@nightpermit/cardano-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:dependencies && tsc -p tsconfig.build.json",
+    "build:dependencies": "npm run build --workspace=@nightpermit/permit",
+    "check": "npm run build:dependencies && tsc -p tsconfig.json --noEmit",
+    "test": "npm run build:dependencies && (cd ../../contracts/cardano && aiken build) && vitest run"
+  },
+  "dependencies": {
+    "@lucid-evolution/lucid": "0.6.2",
+    "@nightpermit/permit": "0.1.0"
+  }
+}

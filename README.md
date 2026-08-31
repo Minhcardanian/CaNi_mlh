@@ -68,8 +68,8 @@ npm test
 npm run build
 ```
 
-The shared `@nightpermit/permit` package owns the canonical binary codec and Ed25519 envelope. The Cardano component consumes the same golden vectors and enforces the state-thread payout transition. The binary layout and trust boundary are documented in [docs/protocol/permit-v1.md](docs/protocol/permit-v1.md); component behavior is documented alongside the [Midnight contract](packages/midnight-contract/README.md), [relay](packages/relay/README.md), and [Cardano validator](contracts/cardano/README.md).
+The shared `@nightpermit/permit` package owns the canonical binary codec and Ed25519 envelope. The Cardano component consumes the same golden vectors and enforces the state-thread payout transition. The binary layout and trust boundary are documented in [docs/protocol/permit-v1.md](docs/protocol/permit-v1.md); component behavior is documented alongside the [Midnight contract](packages/midnight-contract/README.md), [relay](packages/relay/README.md), [Cardano validator](contracts/cardano/README.md), [Cardano transaction client](packages/cardano-client/README.md), and [web application](packages/web/README.md).
 
 ## Project state
 
-The infrastructure baseline, versioned permit protocol, Cardano validator, Midnight authorization contract, and attestation relay are implemented and locally tested. Preprod deployment/proving, Cardano transaction-building integration, and the web application remain in progress.
+The infrastructure baseline, versioned permit protocol, Cardano validator, Midnight authorization contract, attestation relay, Cardano transaction client, and browser flow are implemented and locally tested. The deployment-specific Midnight/Cardano provider bridge, testnet deployment, and live end-to-end proving remain in progress.

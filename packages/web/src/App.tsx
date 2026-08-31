@@ -1,0 +1,154 @@
+import { useEffect, useMemo, useReducer, useRef } from "react";
+import { toFlowError } from "./errors.js";
+import type { AppRuntime } from "./runtime.js";
+import { flowReducer, initialFlowState, type Operation } from "./state.js";
+
+function short(value: string | undefined): string {
+  if (!value) return "Not available";
+  return value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value;
+}
+
+function Status({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return <span className={ok ? "status status--ok" : "status"}>{children}</span>;
+}
+
+export function App({ runtime }: { runtime: AppRuntime }) {
+  const [state, dispatch] = useReducer(flowReducer, initialFlowState);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const busy = state.operation !== undefined;
+
+  useEffect(() => {
+    if (state.error) errorRef.current?.focus();
+  }, [state.error]);
+
+  const run = async (operation: Operation, action: () => Promise<void>) => {
+    dispatch({ type: "START", operation });
+    try {
+      await action();
+    } catch (error) {
+      dispatch({ type: "FAILED", error: toFlowError(error) });
+    }
+  };
+
+  const stageNumber = state.stage === "connect" ? 1 : state.stage === "authorize" ? 2 : 3;
+  const completion = useMemo(() => `${stageNumber} of 3`, [stageNumber]);
+
+  return (
+    <main>
+      <header className="topbar">
+        <a className="brand" href="#top" aria-label="NightPermit home">NightPermit</a>
+        <div className="networks" aria-label="Active test networks">
+          <span>Midnight Preprod</span><span aria-hidden="true">→</span><span>Cardano Preview</span>
+        </div>
+      </header>
+
+      <section className="hero" id="top" aria-labelledby="page-title">
+        <div>
+          <p className="eyebrow">Private approval · public payout</p>
+          <h1 id="page-title">Release one milestone.<br />Reveal only the permit.</h1>
+        </div>
+        <div className="progress" aria-label={`Stage ${completion}`}>
+          <span>{completion}</span>
+          <div><i style={{ width: `${stageNumber / 3 * 100}%` }} /></div>
+        </div>
+      </section>
+
+      {state.error && (
+        <div className="error" role="alert" tabIndex={-1} ref={errorRef}>
+          <div><strong>{state.error.code}</strong><p>{state.error.message}</p></div>
+          <button type="button" onClick={() => dispatch({ type: "CLEAR_ERROR" })}>Dismiss</button>
+        </div>
+      )}
+
+      <section className="workspace" aria-live="polite">
+        <nav className="stages" aria-label="Claim stages">
+          {[
+            [1, "Connect", "Confirm both test networks"],
+            [2, "Authorize", "Two private reviewer approvals"],
+            [3, "Claim", "Verify permit and submit payout"],
+          ].map(([number, title, detail]) => (
+            <div className={stageNumber === number ? "stage stage--active" : "stage"} key={String(number)}>
+              <b>{number}</b><span><strong>{title}</strong><small>{detail}</small></span>
+            </div>
+          ))}
+        </nav>
+
+        <article className="task">
+          {state.stage === "connect" && (
+            <>
+              <p className="step-label">Stage 1</p><h2>Connect the two sides</h2>
+              <p className="lead">Wallet prompts always name the chain and action. No key or witness leaves your wallet.</p>
+              <div className="wallet-row">
+                <div><span>Midnight</span><strong>{state.midnightWallet?.name ?? "Not connected"}</strong><small>Required: Preprod</small></div>
+                <button disabled={busy || Boolean(state.midnightWallet)} onClick={() => void run("connect-midnight", async () => {
+                  dispatch({ type: "MIDNIGHT_CONNECTED", wallet: await runtime.connectMidnight() });
+                })}>{state.midnightWallet ? "Connected" : "Connect Midnight"}</button>
+              </div>
+              <div className="wallet-row">
+                <div><span>Cardano</span><strong>{state.cardanoWallet?.name ?? "Not connected"}</strong><small>Required: Preview</small></div>
+                <button disabled={busy || Boolean(state.cardanoWallet)} onClick={() => void run("connect-cardano", async () => {
+                  dispatch({ type: "CARDANO_CONNECTED", wallet: await runtime.connectCardano() });
+                })}>{state.cardanoWallet ? "Connected" : "Connect Cardano"}</button>
+              </div>
+            </>
+          )}
+
+          {state.stage === "authorize" && (
+            <>
+              <p className="step-label">Stage 2</p><h2>Approve without publishing identity</h2>
+              <p className="lead">The Compact circuit checks this reviewer locally. Public state records only threshold progress and a replay-safe nullifier.</p>
+              <div className="approval-count"><span>{state.approvalCount}</span><p><strong>of 2 approvals confirmed</strong><small>A different eligible reviewer must provide the second approval.</small></p></div>
+              <button className="primary" disabled={busy} onClick={() => void run("approve", async () => {
+                const result = await runtime.approve();
+                dispatch({ type: "APPROVAL_CONFIRMED", ...result });
+              })}>{busy ? "Waiting for Midnight…" : "Review and approve on Midnight"}</button>
+            </>
+          )}
+
+          {state.stage === "claim" && (
+            <>
+              <p className="step-label">Stage 3</p><h2>Claim the exact tranche</h2>
+              <p className="lead">The relay attests to confirmed Midnight state. Cardano still enforces beneficiary, amount, validity, and one-time use.</p>
+              {!state.permit ? (
+                <button className="primary" disabled={busy || !state.midnightTxId} onClick={() => void run("permit", async () => {
+                  const result = await runtime.getPermit(state.midnightTxId!);
+                  dispatch({ type: "PERMIT_RECEIVED", ...result });
+                })}>{busy ? "Checking authorization…" : "Get signed permit"}</button>
+              ) : !state.cardanoTxId ? (
+                <button className="primary" disabled={busy} onClick={() => void run("claim", async () => {
+                  const result = await runtime.claim(state.permit!);
+                  dispatch({ type: "CLAIM_SUBMITTED", transactionId: result.transactionId });
+                  await result.awaitConfirmation();
+                  dispatch({ type: "CLAIM_CONFIRMED", transactionId: result.transactionId });
+                })}>{busy ? "Waiting for Cardano…" : "Review and claim on Cardano"}</button>
+              ) : <p className="pending">Submitted. Waiting for Preview confirmation…</p>}
+            </>
+          )}
+
+          {state.stage === "complete" && (
+            <>
+              <p className="step-label">Complete</p><h2>Milestone paid once</h2>
+              <p className="lead">Cardano Preview confirmed the claim. Reusing this permit nullifier will fail.</p>
+              <Status ok>Confirmed on Cardano Preview</Status>
+            </>
+          )}
+        </article>
+
+        <aside className="evidence" aria-labelledby="evidence-title">
+          <div><p className="step-label">Public evidence</p><h2 id="evidence-title">Protocol record</h2></div>
+          <dl>
+            <div><dt>Midnight wallet</dt><dd><Status ok={Boolean(state.midnightWallet)}>{state.midnightWallet ? "Preprod connected" : "Waiting"}</Status></dd></div>
+            <div><dt>Cardano wallet</dt><dd><Status ok={Boolean(state.cardanoWallet)}>{state.cardanoWallet ? "Preview connected" : "Waiting"}</Status></dd></div>
+            <div><dt>Threshold</dt><dd>{state.approvalCount} / 2</dd></div>
+            <div><dt>Midnight transaction</dt><dd title={state.midnightTxId}>{short(state.midnightTxId)}</dd></div>
+            <div><dt>Permit hash</dt><dd title={state.permit?.permitHash}>{short(state.permit?.permitHash)}</dd></div>
+            <div><dt>Relay signature</dt><dd>{state.permit ? <Status ok>Present</Status> : "Not available"}</dd></div>
+            <div><dt>Cardano transaction</dt><dd title={state.cardanoTxId}>{short(state.cardanoTxId)}</dd></div>
+            <div><dt>Final state</dt><dd><Status ok={state.confirmed}>{state.confirmed ? "Confirmed" : "Not confirmed"}</Status></dd></div>
+          </dl>
+          <p className="trust-note"><strong>Trust boundary</strong>The relay is a single testnet attestor. Cardano does not verify a Midnight proof directly.</p>
+        </aside>
+      </section>
+    </main>
+  );
+}
